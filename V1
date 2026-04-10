@@ -1,0 +1,271 @@
+
+VolonterUA — Backend V1 (Implemented Functionality)
+
+🎯 Overview
+
+Документ відображає фактичний стан бекенду V1, підтверджений повним проходженням 138 unit-тестів.
+Усі ключові бізнес-флоу реалізовані та протестовані.
+
+⸻
+
+🔐 Authentication & Authorization
+
+Реалізовано:
+	•	Реєстрація користувача
+	•	Логін (JWT access + refresh tokens)
+	•	Refresh токени:
+	•	перевірка reuse
+	•	revoked
+	•	expired
+	•	Перевірка активності користувача
+	•	Хешування паролів
+
+Email Verification:
+	•	Запит на верифікацію
+	•	Підтвердження email
+	•	Обробка:
+	•	invalid code
+	•	expired code
+	•	reuse code
+	•	Rate limiting
+
+Password Reset:
+	•	Запит на скидання
+	•	Підтвердження коду
+	•	Зміна пароля
+	•	Валідації:
+	•	неправильний пароль
+	•	однаковий пароль
+	•	expired code
+	•	Rate limiting
+
+⸻
+
+🌍 Geo (Countries & Cities)
+
+Countries:
+	•	CRUD (create, read, update, delete)
+	•	Partial update
+	•	Конфлікти (name / iso_code)
+	•	Видалення з перевіркою залежностей (cities)
+
+Cities:
+	•	CRUD
+	•	Partial update
+	•	Прив’язка до країни
+
+⸻
+
+👤 Users
+	•	Створення користувача
+	•	Оновлення профілю
+	•	Деактивація (soft delete)
+	•	Отримання користувача
+	•	Валідація:
+	•	унікальність email
+	•	дата народження
+
+⸻
+
+📩 Email Service
+	•	Рендер HTML шаблонів
+	•	Відправка через SMTP
+	•	Використання:
+	•	starttls
+	•	login
+	•	Обробка помилок через EmailSendError
+
+⸻
+
+📝 Requests (Core Domain)
+
+Requests:
+	•	Створення
+	•	Оновлення
+	•	Отримання одного
+	•	Отримання списку
+	•	Скасування
+	•	Permission checks (owner only)
+
+⸻
+
+🔍 Filters & Search
+
+Реалізовано:
+	•	Фільтр по статусу
+	•	Фільтр по місту
+	•	Пошук по title
+	•	Фільтр:
+	•	has_assignee
+	•	Фільтр по даті:
+	•	created_from
+	•	created_to
+
+⸻
+
+📦 Pagination
+	•	page / limit
+	•	offset-based
+	•	використовується у:
+	•	requests
+	•	offers
+	•	notifications
+	•	assignments
+
+⸻
+
+📊 Full Request View
+
+Метод:
+
+get_full_request
+
+Повертає:
+	•	request (основні дані)
+	•	request_creator
+	•	request_items
+	•	request_offers
+	•	request_item_assignments
+	•	request_offer_creators
+	•	counts:
+	•	offers_count
+	•	items_count
+	•	assignments_count
+
+⸻
+
+📦 Request Items
+	•	Створення item
+	•	Оновлення
+	•	Видалення
+	•	Отримання:
+	•	одного
+	•	всіх
+	•	по користувачу
+	•	Валідація qty
+	•	Permission checks
+
+⸻
+
+🤝 Request Offers
+
+Реалізовано:
+	•	Створення offer
+	•	Заборона self-offer
+	•	Прийняття offer
+	•	Відхилення offer
+	•	Видалення
+	•	Оновлення
+
+Бізнес-обмеження:
+	•	не можна змінювати accepted offer
+	•	permission checks
+
+Отримання:
+	•	всі offers
+	•	мої offers
+	•	accepted
+	•	declined
+	•	pagination
+
+⸻
+
+📌 Request Item Assignment
+
+Реалізовано:
+	•	Створення assignment
+	•	Оновлення
+	•	Видалення
+	•	Отримання:
+	•	по request_item
+	•	по offer
+	•	мої assignments (через offer.user_id)
+
+Бізнес-логіка:
+	•	контроль overflow (qty_taken ≤ qty)
+	•	зв’язок:
+	•	RequestItem
+	•	RequestOffer
+	•	автоматична зміна статусу request
+
+⸻
+
+🔔 Notifications
+
+Реалізовано:
+	•	Створення notification
+	•	Domain events:
+	•	notify_offer_accepted
+	•	notify_offer_declined
+	•	notify_assignment_created
+
+Отримання:
+	•	список (мої)
+	•	по id
+	•	unread count
+
+Оновлення:
+	•	mark as read
+
+⸻
+
+📜 Consents
+	•	Створення
+	•	Унікальність (type + version)
+	•	Отримання:
+	•	user consents
+	•	конкретної версії
+
+⸻
+
+🛡 Audit
+	•	Логування подій
+	•	Підтримка:
+	•	з user
+	•	без user
+	•	metadata (JSON)
+
+⸻
+
+⚠️ Error Handling
+
+Кастомні помилки:
+	•	BadRequestError (400)
+	•	UnauthorizedError (401)
+	•	ForbiddenError (403)
+	•	NotFoundError (404)
+	•	ConflictError (409)
+	•	EmailSendError
+
+⸻
+
+🧪 Testing
+
+Покриття:
+	•	138 unit тестів
+	•	Повністю покрито:
+	•	auth flows
+	•	business logic
+	•	validation
+	•	edge cases
+	•	permissions
+	•	filtering
+	•	pagination
+
+⸻
+
+✅ V1 Status
+
+Реалізовано:
+
+✔ Повний authentication flow
+✔ Requests (core логіка)
+✔ Offers + Assignments (повний цикл)
+✔ Filters + Search
+✔ Pagination
+✔ Notifications (in-app)
+✔ Email service
+✔ Audit logging
+✔ Error handling
+
+⸻

@@ -1,0 +1,42 @@
+from fastapi import FastAPI
+import app.models_registry
+from app.common.exceptions import register_exception_handlers
+
+from app.auth.routes import router as auth_router
+from app.users.users.routes import router as users_router
+
+from app.geo.countries.routers import router as countries_router
+from app.geo.cities.routers import router as cities_router
+
+from app.requests.requests.routes import router as requests_router
+from app.requests.request_items.routes import router as request_items_router
+from app.requests.request_offers.routes import router as request_offers_router
+from app.requests.request_item_assignment.routes import router as request_item_assignment_router
+
+from app.notifications.routes import router as notifications_router
+
+from app.consents.routes import router as consents_router
+
+
+app = FastAPI(title="VolonterUA")
+register_exception_handlers(app)
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+app.include_router(auth_router)
+
+app.include_router(users_router)
+
+app.include_router(countries_router)
+app.include_router(cities_router)
+
+app.include_router(requests_router)
+app.include_router(request_items_router)
+app.include_router(request_offers_router)
+app.include_router(request_item_assignment_router)
+
+app.include_router(notifications_router)
+
+app.include_router(consents_router)
