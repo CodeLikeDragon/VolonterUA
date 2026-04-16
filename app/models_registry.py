@@ -15,6 +15,10 @@ from app.requests.request_offers import models as _request_offers_models  # noqa
 from app.geo.cities import models as _cities_models  # noqa: F401
 from app.geo.countries import models as _countries_models  # noqa: F401
 
+from app.chats.chats import models as _chats_models  # noqa: F401
+from app.chats.messages import models as _messages_models  # noqa: F401
+from app.chats.chat_participants import models as _chat_participants_models  # noqa: F401
+
 from app.notifications import models as _notif_models  # noqa: F401
 
 from app.consents import models as _consents_models    # noqa: F401

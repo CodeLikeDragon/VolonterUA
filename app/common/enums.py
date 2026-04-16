@@ -26,6 +26,15 @@ class ConsentType(StrEnum):
     SMS_NOTIFICATIONS = "SMS_NOTIFICATIONS"
     DATA_PROCESSING = "DATA_PROCESSING"
 
+class ChatStatus(StrEnum):
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    CANCELED = "CANCELED"
+
+class ChatParticipantRole(StrEnum):
+    CREATOR = "CREATOR"
+    MEMBER = "MEMBER"
+
 
 # Хелпер: у SQLite немає нативних ENUM, тому ставимо native_enum=False і зберігаємо як TEXT
 def sa_enum(enum_cls):

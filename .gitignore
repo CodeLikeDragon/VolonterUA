@@ -8,3 +8,5 @@ venv/
 .DS_Store
 alembic/versions/*.pyc
 todo
+VolonterUA_V2.txt
+V1
