@@ -21,7 +21,7 @@ class RefreshToken(Base):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     jti: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     token_hash: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     user_agent: Mapped[str | None] = mapped_column(String(255))
@@ -34,7 +34,7 @@ class RefreshToken(Base):
     revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     replaced_by: Mapped[str | None] = mapped_column(String(36))
 
-    user: Mapped["User"] = relationship(back_populates="refresh_tokens")
+    user: Mapped["User"] = relationship(back_populates="refresh_tokens", passive_deletes=True)
 
     __table_args__ = (
         Index("ix_refresh_tokens_user_id", "user_id"),

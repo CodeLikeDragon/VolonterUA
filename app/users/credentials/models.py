@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 class Credentials(Base):
     __tablename__ = "credentials"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     password_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    user: Mapped["User"] = relationship(back_populates="credentials")
+    user: Mapped["User"] = relationship(back_populates="credentials", passive_deletes=True)
