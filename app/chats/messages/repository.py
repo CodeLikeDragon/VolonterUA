@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.chats.messages.models import Message
+from app.chats.messages.schemas import MessageCreate
 
 
 class MessageRepository:
@@ -13,11 +14,11 @@ class MessageRepository:
         self.session = session
 
 
-    async def create(self, chat_id: UUID, sender_id: UUID, text: str) -> Message:
+    async def create(self, chat_id: UUID, sender_id: UUID, data: MessageCreate) -> Message:
         message = Message(
             chat_id=chat_id,
             sender_id=sender_id,
-            text=text
+            text=data.text
         )
         self.session.add(message)
         await self.session.flush()

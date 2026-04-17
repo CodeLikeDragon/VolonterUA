@@ -36,3 +36,15 @@ class ChatParticipantRepository:
         stmt = select(ChatParticipant).where(ChatParticipant.chat_id == chat_id)
         result = await self.session.execute(stmt)
         return result.scalars().all()
+
+
+    async def delete(self, chat_id: UUID, user_id: UUID) -> None:
+        stmt = (select(ChatParticipant)
+                .where(ChatParticipant.chat_id == chat_id,
+                       ChatParticipant.user_id == user_id)
+                )
+        result = await self.session.execute(stmt)
+
+        participant = result.scalars().first()
+
+        await self.session.delete(participant)

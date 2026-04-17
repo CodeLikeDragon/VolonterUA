@@ -56,9 +56,6 @@ class ChatRepository:
         return result.scalars().all()
 
 
-    async def delete(self, chat_id: UUID) -> None:
-        chat = await self.get(chat_id)
-        if not chat:
-            return
+    async def delete(self, chat: Chat) -> None:
         self.session.delete(chat)
         await self.session.flush()
