@@ -5,6 +5,13 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.chats.chat_participants.repository import ChatParticipantRepository
+from app.chats.chats.repository import ChatRepository
+from app.chats.chats.service import ChatService
+from app.chats.managing.manager import ConnectionManager
+from app.chats.managing.service import WebSocketService
+from app.chats.messages.repository import MessageRepository
+from app.chats.messages.service import MessageService
 from app.common.errors import UnauthorizedError
 from app.core.db import async_session_factory
 from app.core.security import decode_access_token
@@ -106,7 +113,7 @@ def get_audit_service(
     session: AsyncSession = Depends(get_session)
 ):
     repo = AuditEventRepository(session)
-    return AuditEventService(repo)
+    return AuditEventService(session=session, repo=repo)
 
 
 # =========================
@@ -121,7 +128,7 @@ async def get_auth_service(
     refresh_repo = RefreshTokenRepository(session)
     audit_repo = AuditEventRepository(session)
 
-    audit_service = AuditEventService(audit_repo)
+    audit_service = AuditEventService(session=session, repo=audit_repo)
 
     return AuthService(
         session=session,
@@ -156,7 +163,8 @@ def get_password_reset_service(
         session=session,
         repo=PasswordResetRepository(session),
         user_repo=UserRepository(session),
-        email_service=EmailService()
+        email_service=EmailService(),
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
 
@@ -168,9 +176,11 @@ def get_email_verification_service(
     session: AsyncSession = Depends(get_session)
 ):
     return EmailVerificationService(
+        session=session,
         repo=EmailVerificationRepository(session),
+        user_repo=UserRepository(session),
         email_service=EmailService(),
-        audit_service=AuditEventService(AuditEventRepository(session))
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
 
@@ -218,7 +228,7 @@ def get_request_item_service(
         session=session,
         item_repo=RequestItemRepository(session),
         request_repo=RequestRepository(session),
-        audit_service=AuditEventService(AuditEventRepository(session))
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
 
@@ -241,7 +251,7 @@ def get_request_item_assignment_service(
         item_repo=RequestItemRepository(session),
         offer_repo=RequestOfferRepository(session),
         notification_service=NotificationService(NotificationsRepository(session)),
-        audit_service=AuditEventService(AuditEventRepository(session))
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
 
@@ -275,7 +285,7 @@ def get_city_service(
     return CityService(
         session=session,
         repo=CityRepository(session),
-        audit_service=AuditEventService(AuditEventRepository(session))
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
 
@@ -285,5 +295,35 @@ def get_country_service(
     return CountryService(
         session=session,
         repo=CountryRepository(session),
-        audit_service=AuditEventService(AuditEventRepository(session))
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    )
+
+
+# =========================
+# WEBSOCKETS
+# =========================
+
+def get_websocket_service(
+    session: AsyncSession = Depends(get_session),
+):
+    message_repo = MessageRepository(session),
+    chat_participant_repo = ChatParticipantRepository(session),
+
+    user_service = UserService(session, repo=UserRepository(session), city_repo=CityRepository(session)),
+    chat_service = ChatService(
+        session=session,
+        repo=ChatRepository(session),
+        chat_participant_repo=chat_participant_repo,
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    ),
+
+    return WebSocketService(
+        manager=ConnectionManager(),
+        message_service=MessageService(
+            session=session,
+            repo=message_repo,
+            chat_participant_repo=chat_participant_repo,
+            user_service=user_service,
+            chat_service=chat_service
+        )
     )
