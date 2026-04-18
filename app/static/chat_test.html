@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Test</title>
+</head>
+<body>
+
+<h2>WebSocket Chat Test</h2>
+
+<label>Chat ID:</label>
+<input id="chatId" type="text" size="40"><br><br>
+
+<label>Token:</label>
+<input id="token" type="text" size="200"><br><br>
+
+<button onclick="connect()">Connect</button>
+<button onclick="disconnect()">Disconnect</button>
+
+<hr>
+
+<input id="messageInput" type="text" size="60">
+<button onclick="sendMessage()">Send</button>
+
+<ul id="messages"></ul>
+
+<script>
+    let socket = null;
+
+    function connect() {
+        const chatId = document.getElementById("chatId").value;
+        const token = document.getElementById("token").value;
+
+        socket = new WebSocket(`ws://127.0.0.1:8000/ws/${chatId}?token=${token}`);
+
+        socket.onopen = () => {
+            log("Connected");
+        };
+
+        socket.onmessage = (event) => {
+            log("Message: " + event.data);
+        };
+
+        socket.onclose = () => {
+            log("Disconnected");
+        };
+
+        socket.onerror = (err) => {
+            log("Error: " + err);
+        };
+    }
+
+    function sendMessage() {
+        const input = document.getElementById("messageInput");
+        socket.send(input.value);
+        input.value = "";
+    }
+
+    function disconnect() {
+        if (socket) {
+            socket.close();
+        }
+    }
+
+    function log(message) {
+        const li = document.createElement("li");
+        li.textContent = message;
+        document.getElementById("messages").appendChild(li);
+    }
+</script>
+
+</body>
+</html>

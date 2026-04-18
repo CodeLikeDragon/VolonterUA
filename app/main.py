@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
 import app.models_registry
 from app.common.exceptions import register_exception_handlers
 
@@ -17,9 +20,27 @@ from app.notifications.routes import router as notifications_router
 
 from app.consents.routes import router as consents_router
 
+from app.chats.chats.routers import router as chats_router
+from app.chats.managing.routers import router as ws_router
+
 
 app = FastAPI(title="VolonterUA")
 register_exception_handlers(app)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 🔥 для тесту
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"]
+)
 
 @app.get("/health")
 async def health():
@@ -40,3 +61,11 @@ app.include_router(request_item_assignment_router)
 app.include_router(notifications_router)
 
 app.include_router(consents_router)
+
+app.include_router(chats_router)
+
+
+app.include_router(ws_router)
+
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
