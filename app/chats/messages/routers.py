@@ -8,7 +8,7 @@ from app.chats.messages.service import MessageService
 from app.core.deps import get_message_service, get_current_user
 from app.users.users.models import User
 
-router = APIRouter(prefix="/messages", tags=["Chat | Messages"])
+router = APIRouter(prefix="/messages", tags=["Chats | Messages"])
 
 
 # -----------------------------

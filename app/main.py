@@ -21,6 +21,7 @@ from app.notifications.routes import router as notifications_router
 from app.consents.routes import router as consents_router
 
 from app.chats.chats.routers import router as chats_router
+from app.chats.messages.routers import router as messages_router
 from app.chats.managing.routers import router as ws_router
 
 
@@ -63,6 +64,7 @@ app.include_router(notifications_router)
 app.include_router(consents_router)
 
 app.include_router(chats_router)
+app.include_router(messages_router)
 
 
 app.include_router(ws_router)
