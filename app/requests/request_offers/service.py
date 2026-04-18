@@ -6,6 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.audit.service import AuditEventService
+from app.chats.chat_participants.repository import ChatParticipantRepository
+from app.chats.chats.repository import ChatRepository
+from app.chats.chats.schemas import ChatCreate
+from app.chats.chats.service import ChatService
+from app.common.enums import ChatParticipantRole
 from app.common.errors import NotFoundError, ConflictError
 from app.common.pagination.schemas import PaginationParams
 from app.notifications.service import NotificationService
@@ -30,12 +35,18 @@ class RequestOfferService:
         session: AsyncSession,
         repo: RequestOfferRepository,
         request_repo: RequestRepository,
+        chat_repo: ChatRepository,
+        chat_participant_repo: ChatParticipantRepository,
+        chat_service: ChatService,
         notification_service: NotificationService,
         audit_service: AuditEventService,
     ):
         self.session = session
         self.repo = repo
         self.request_repo = request_repo
+        self.chat_repo = chat_repo
+        self.chat_participant_repo = chat_participant_repo
+        self.chat_service = chat_service
         self.notification_service = notification_service
         self.audit_service = audit_service
 
@@ -172,6 +183,7 @@ class RequestOfferService:
     # -----------------------------
     async def accept_offer(self, offer_id: UUID, user_id: UUID) -> RequestOffer:
 
+
         offer = await self.repo.get_for_update(offer_id)
         if not offer:
             raise NotFoundError("Offer not found")
@@ -189,6 +201,35 @@ class RequestOfferService:
         except SQLAlchemyError:
             await self.session.rollback()
             raise ConflictError("Failed to accept offer")
+
+        # create CHAT
+        chat = await self.chat_repo.get_by_request_id(offer.request_id)
+
+        if not chat:
+
+            chat = await self.chat_service.create_chat(
+                ChatCreate(request_id=offer.request_id)
+            )
+
+
+            await self.chat_participant_repo.add_user(
+                chat.id,
+                offer.user_id,
+                ChatParticipantRole.MEMBER
+            )
+
+            await self.chat_participant_repo.add_user(
+                chat.id,
+                request.created_by,
+                ChatParticipantRole.CREATOR
+            )
+
+            print("CHAT:", chat)
+            print("CHAT ID:", chat.id)
+            print("REQUEST OWNER:", request.created_by)
+            print("OFFER USER:", offer.user_id)
+
+            await self.session.commit()
 
         await self.notification_service.notify_offer_accepted(
             helper_id=offer.user_id,
