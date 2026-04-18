@@ -192,7 +192,9 @@ def get_refresh_token_service(
     session: AsyncSession = Depends(get_session)
 ):
     return RefreshTokenService(
-        repo=RefreshTokenRepository(session)
+        session=session,
+        repo=RefreshTokenRepository(session),
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
 
@@ -235,9 +237,26 @@ def get_request_item_service(
 def get_request_offer_service(
     session: AsyncSession = Depends(get_session)
 ):
+    chat_participant_repo = ChatParticipantRepository(session)
+    chat_repo = ChatRepository(session)
+    notify_repo = NotificationsRepository(session)
+    audit_service = AuditEventService(session=session, repo=AuditEventRepository(session))
+    chat_service = ChatService(
+        session=session,
+        repo=chat_repo,
+        chat_participant_repo=chat_participant_repo,
+        audit_service=audit_service
+    )
+
     return RequestOfferService(
+        session=session,
         repo=RequestOfferRepository(session),
-        notification_service=NotificationService(NotificationsRepository(session))
+        request_repo=RequestRepository(session),
+        chat_participant_repo=chat_participant_repo,
+        chat_repo=chat_repo,
+        chat_service=chat_service,
+        notification_service=NotificationService(session=session, repo=notify_repo),
+        audit_service=audit_service
     )
 
 
@@ -304,18 +323,18 @@ def get_country_service(
 # =========================
 
 def get_websocket_service(
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session)
 ):
-    message_repo = MessageRepository(session),
-    chat_participant_repo = ChatParticipantRepository(session),
+    message_repo = MessageRepository(session)
+    chat_participant_repo = ChatParticipantRepository(session)
 
-    user_service = UserService(session, repo=UserRepository(session), city_repo=CityRepository(session)),
+    user_service = UserService(session, repo=UserRepository(session), city_repo=CityRepository(session))
     chat_service = ChatService(
         session=session,
         repo=ChatRepository(session),
         chat_participant_repo=chat_participant_repo,
         audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
-    ),
+    )
 
     return WebSocketService(
         manager=ConnectionManager(),
@@ -326,4 +345,41 @@ def get_websocket_service(
             user_service=user_service,
             chat_service=chat_service
         )
+    )
+
+# =========================
+# WEBSOCKETS (CHATS)
+# =========================
+
+def get_chat_service(
+    session: AsyncSession = Depends(get_session)
+):
+    chat_participant_repo = ChatParticipantRepository(session)
+
+    return ChatService(
+        session=session,
+        repo=ChatRepository(session),
+        chat_participant_repo=chat_participant_repo,
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    )
+
+
+def get_message_service(
+    session: AsyncSession = Depends(get_session)
+):
+    message_repo = MessageRepository(session)
+    chat_participant_repo = ChatParticipantRepository(session)
+    user_service = UserService(session, repo=UserRepository(session), city_repo=CityRepository(session))
+    chat_service = ChatService(
+        session=session,
+        repo=ChatRepository(session),
+        chat_participant_repo=chat_participant_repo,
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    )
+    return MessageService(
+        session=session,
+        repo=message_repo,
+        chat_participant_repo=chat_participant_repo,
+        user_service=user_service,
+        chat_service=chat_service
     )
