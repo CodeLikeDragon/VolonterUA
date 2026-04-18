@@ -1,10 +1,10 @@
 from typing import Generic, TypeVar, List
-from pydantic.generics import GenericModel
+from pydantic import BaseModel
 
 T = TypeVar("T")
 
 
-class Page(GenericModel, Generic[T]):
+class Page(BaseModel, Generic[T]):
     items: List[T]
     total: int
     limit: int
