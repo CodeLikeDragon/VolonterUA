@@ -41,7 +41,7 @@ class RequestItemService:
         return await self.item_repo.list_all(limit=limit, offset=offset)
 
 
-    async def get_user_items(self, user_id: UUID):
+    async def get_user_items(self, user_id: UUID) -> list[RequestItem]:
         return await self.item_repo.get_user_items(user_id)
 
     # -----------------------------

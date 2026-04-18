@@ -57,5 +57,5 @@ class ChatRepository:
 
 
     async def delete(self, chat: Chat) -> None:
-        self.session.delete(chat)
+        await self.session.delete(chat)
         await self.session.flush()

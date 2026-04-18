@@ -1,6 +1,6 @@
 from typing import List
+from uuid import UUID
 
-from sqlalchemy import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,18 +28,7 @@ class ChatService:
 
 
     async def create_chat(self, data: ChatCreate) -> Chat:
-
-        try:
-            chat = await self.repo.create(data.request_id)
-            await self.session.commit()
-        except IntegrityError:
-            await self.session.rollback()
-            raise ConflictError("Failed to create chat")
-
-        await self.audit_service.log_event(
-            event="chat_created"
-        )
-
+        chat = await self.repo.create(data.request_id)
         return chat
 
 

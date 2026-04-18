@@ -47,7 +47,7 @@ class MessageService:
         message = await self.repo.create(
             chat_id=chat_id,
             sender_id=sender_id,
-            text=data.text
+            data=data
         )
 
         await self.session.commit()
