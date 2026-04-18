@@ -10,6 +10,16 @@ from app.requests.request_items.schemas import RequestItemOut, RequestItemCreate
 
 router = APIRouter(prefix="/items", tags=["Requests | Request Items"])
 
+# -----------------------------
+# GET MY ITEMS
+# -----------------------------
+
+@router.get("/me", response_model=List[RequestItemOut])
+async def get_my_items(
+    user_id: UUID = Depends(get_current_user_id),
+    service: RequestItemService = Depends(get_request_item_service)
+):
+    return await service.get_user_items(user_id)
 
 # -----------------------------
 # GET ONE
@@ -34,19 +44,6 @@ async def get_all_items(
     service: RequestItemService = Depends(get_request_item_service)
 ):
     return await service.get_all_items(limit=limit, offset=offset)
-
-
-# -----------------------------
-# GET MY ITEMS
-# -----------------------------
-
-@router.get("/me", response_model=List[RequestItemOut])
-async def get_my_items(
-    user_id: UUID = Depends(get_current_user_id),
-    service: RequestItemService = Depends(get_request_item_service)
-):
-    return await service.get_user_items(user_id)
-
 
 # -----------------------------
 # CREATE

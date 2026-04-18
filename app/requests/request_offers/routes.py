@@ -14,7 +14,7 @@ from app.requests.request_offers.service import RequestOfferService
 from app.users.users.models import User
 
 router = APIRouter(
-    prefix="/requests/offers",
+    prefix="/request-offers",
     tags=["Requests | Request Offers"],
 )
 
@@ -23,7 +23,7 @@ router = APIRouter(
 # GET
 # -----------------------------
 
-@router.get("/me/offers")
+@router.get("/me")
 async def get_my_offers(
     pagination: PaginationParams = Depends(),
     user: User = Depends(get_current_user),
@@ -61,7 +61,6 @@ async def get_all_request_offers(
     service: RequestOfferService = Depends(get_request_offer_service)
 ):
     return await service.get_request_offers(limit=limit, offset=offset)
-
 
 # -----------------------------
 # CREATE
