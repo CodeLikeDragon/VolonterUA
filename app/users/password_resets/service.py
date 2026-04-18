@@ -112,10 +112,9 @@ class PasswordResetService:
         if not reset:
             raise BadRequestError("Invalid or expired code")
 
-        reset.used_at = datetime.now(timezone.utc)
-        user.credentials.password_hash = hash_password(new_password)
-
         try:
+            reset.used_at = datetime.now(timezone.utc)
+            user.credentials.password_hash = hash_password(new_password)
             await self.session.commit()
         except Exception:
             await self.session.rollback()
