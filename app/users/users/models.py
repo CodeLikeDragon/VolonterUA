@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.users.oauth_accounts.models import OAuthAccount
     from app.users.credentials.models import Credentials
     from app.users.refresh_tokens.models import RefreshToken
+    from app.users.password_resets.models import PasswordReset
 
 
 class User(Base):
@@ -43,6 +44,7 @@ class User(Base):
     credentials: Mapped["Credentials"] = relationship(back_populates="user", uselist=False, cascade="all, delete-orphan")
     oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    password_resets: Mapped[list["PasswordReset"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_users_is_active", "is_active"),
