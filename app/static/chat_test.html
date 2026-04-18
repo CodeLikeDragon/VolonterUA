@@ -37,7 +37,19 @@
         };
 
         socket.onmessage = (event) => {
-            log("Message: " + event.data);
+            const data = JSON.parse(event.data);
+
+            if (data.type === "text_message") {
+                log(`${data.sender_id}: ${data.text}`);
+            }
+
+            if (data.type === "join") {
+                log(`User joined: ${data.user_id}`);
+            }
+
+            if (data.type === "leave") {
+                log(`User left: ${data.user_id}`);
+            }
         };
 
         socket.onclose = () => {
