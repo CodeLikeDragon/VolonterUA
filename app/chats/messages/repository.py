@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from uuid import UUID
 from typing import List
 
@@ -59,9 +60,20 @@ class MessageRepository:
         await self.session.flush()
 
 
-    async def delete(self, message_id: UUID) -> None:
-        message = await self.get(message_id)
-        if not message:
-            return
-        self.session.delete(message)
+    async def edit(self, message: Message, data: MessageCreate) -> Message:
+        message.text = data.text
+        message.updated_at = datetime.now(timezone.utc)
+
+        self.session.add(message)
+        await self.session.flush()
+        return message
+
+
+    async def delete(self, message: Message | list[Message]) -> None:
+        if isinstance(message, list):
+            for m in message:
+                await self.session.delete(m)
+        else:
+            await self.session.delete(message)
+
         await self.session.flush()

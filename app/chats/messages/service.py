@@ -68,7 +68,55 @@ class MessageService:
 
     async def mark_message_read(self, chat_id: UUID, user_id: UUID) -> None:
         await self.repo.mark_as_read(chat_id=chat_id, user_id=user_id)
+        await self.session.commit()
+
+
+    async def edit_message(self, message_id: UUID, user_id: UUID, data: MessageCreate) -> Message:
+        message = await self.get_message(message_id)
+
+        if message.sender_id != user_id:
+            raise ForbiddenError("You can't edit messages from other users")
+
+        if message.text == data.text:
+            raise ConflictError("The same change data")
+
+        edited = await self.repo.edit(message=message, data=data)
+        await self.session.commit()
+
+        return edited
 
 
     async def delete_message(self, message_id: UUID) -> None:
-        await self.repo.delete(message_id)
+        message = await self.get_message(message_id)
+        await self.repo.delete(message)
+        await self.session.commit()
+
+
+    async def delete_messages(self, messages: list[Message]) -> None:
+        if len(messages) == 0:
+            raise NotFoundError("Message not found")
+
+        await self.repo.delete(messages)
+        await self.session.commit()
+
+
+    async def delete_user_message(self, message_id: UUID, user_id: UUID) -> None:
+        message = await self.get_message(message_id)
+
+        if message.sender_id != user_id:
+            raise ForbiddenError("You can't delete messages from other users")
+
+        await self.repo.delete(message)
+        await self.session.commit()
+
+
+    async def delete_user_messages(self, user_id: UUID, messages: list[Message]) -> None:
+        if len(messages) == 0:
+            raise NotFoundError("Message not found")
+
+        for message in messages:
+            if message.sender_id != user_id:
+                raise ForbiddenError("You can't delete messages from other users")
+
+        await self.repo.delete(messages)
+        await self.session.commit()
