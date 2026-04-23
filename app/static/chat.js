@@ -17,6 +17,16 @@ function connect() {
 
         switch (eventData.type) {
 
+            case "TYPING":
+                const typingEl = document.getElementById("typingIndicator");
+
+                if (eventData.data.is_typing) {
+                    typingEl.textContent = `User ${eventData.data.user_id} is typing...`;
+                } else {
+                    typingEl.textContent = "";
+                }
+                break;
+
             case "HISTORY":
                 eventData.data.forEach(msg => {
                     log(`${msg.sender_id}: ${msg.text}`);
@@ -76,4 +86,29 @@ function log(message) {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("connectBtn").addEventListener("click", connect);
+});
+
+let typingTimeout = null;
+
+document.getElementById("messageInput").addEventListener("input", () => {
+    if (!socket) return;
+
+    // почав друкувати
+    socket.send(JSON.stringify({
+        type: "TYPING",
+        data: {
+            is_typing: true
+        }
+    }));
+
+    // debounce (зупинився друкувати)
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+        socket.send(JSON.stringify({
+            type: "TYPING",
+            data: {
+                is_typing: false
+            }
+        }));
+    }, 500);
 });

@@ -21,8 +21,13 @@ class ConnectionManager:
         await websocket.send_text(message)
 
     async def broadcast(self, chat_id: UUID, message: str):
-        for connection in self.active_connections[chat_id]:
-            await connection.send_text(message)
+        connections = self.active_connections[chat_id]
+
+        for connection in connections.copy():
+            try:
+                await connection.send_text(message)
+            except Exception:
+                connections.remove(connection)
 
 
 manager = ConnectionManager()

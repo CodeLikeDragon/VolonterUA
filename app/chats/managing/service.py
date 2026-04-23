@@ -53,7 +53,6 @@ class WebSocketService:
 
         # HISTORY
         messages = await self.message_service.get_last_messages(chat_id)
-
         print("SENDING HISTORY:", len(messages))
 
         await websocket.send_text(dumps({
@@ -69,6 +68,20 @@ class WebSocketService:
             ]
         }))
 
+        # MARK AS READ
+        await self.message_service.mark_message_read(chat_id, user_id)
+
+        await self.manager.broadcast(
+            chat_id,
+            dumps({
+                "type": mt.READ.value,
+                "data": {
+                    "chat_id": str(chat_id),
+                    "user_id": str(user_id)
+                }
+            })
+        )
+
         # LOGS PARTICIPANTS
         participants = await self.message_service.chat_participant_repo.get_chat_participants(chat_id)
         print("PARTICIPANTS:", participants)
@@ -78,7 +91,7 @@ class WebSocketService:
         await self.manager.broadcast(
             chat_id,
             dumps({
-                "type": mt.JOIN_TO_CHAT,
+                "type": mt.JOIN_TO_CHAT.value,
                 "data": {
                     "user_id": str(user_id)
                 }
@@ -87,12 +100,26 @@ class WebSocketService:
 
         try:
             while True:
-                raw = await websocket.receive_text()
 
+                raw = await websocket.receive_text()
                 event = json.loads(raw)
 
+                # TYPING INDICATOR
+                if event["type"] == mt.TYPING.value:
+                    await self.manager.broadcast(
+                        chat_id,
+                        dumps({
+                            "type": mt.TYPING.value,
+                            "data": {
+                                "user_id": str(user_id),
+                                "is_typing": event["data"]["is_typing"]
+                            }
+                        })
+                    )
+                    continue
+
                 # SAVE MESSAGE
-                if event["type"] == mt.TEXT:
+                if event["type"] == mt.TEXT.value:
                     text = event["data"]["text"]
 
                     message = await self.message_service.create_message(
@@ -104,7 +131,7 @@ class WebSocketService:
                     await self.manager.broadcast(
                         chat_id,
                         dumps({
-                            "type": mt.TEXT,
+                            "type": mt.TEXT.value,
                             "data": {
                                 "chat_id": str(chat_id),
                                 "sender_id": str(user_id),
@@ -119,7 +146,7 @@ class WebSocketService:
             await self.manager.broadcast(
                 chat_id,
                 dumps({
-                    "type": mt.LEAVE,
+                    "type": mt.LEAVE.value,
                     "data": {
                         "user_id": str(user_id)
                     }

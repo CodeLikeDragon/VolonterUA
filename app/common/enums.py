@@ -46,6 +46,9 @@ class MessageType(StrEnum):
 
     HISTORY = "HISTORY"
 
+    READ = "READ"
+    TYPING = "TYPING"
+
 
 # Хелпер: у SQLite немає нативних ENUM, тому ставимо native_enum=False і зберігаємо як TEXT
 def sa_enum(enum_cls):
