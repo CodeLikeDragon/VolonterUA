@@ -37,7 +37,7 @@ class Message(Base):
         nullable=False
     )
 
-    text: Mapped[str] = mapped_column(TEXT, nullable=False)
+    text: Mapped[str] = mapped_column(TEXT, nullable=True)
 
     file_url: Mapped[str | None] = mapped_column(String, nullable=True)
 

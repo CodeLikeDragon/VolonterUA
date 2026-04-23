@@ -71,3 +71,4 @@ app.include_router(ws_router)
 
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/media", StaticFiles(directory="media"), name="media")

@@ -24,3 +24,8 @@ button {
     padding: 5px;
     border-bottom: 1px solid #ddd;
 }
+
+#messages img {
+    border-radius: 8px;
+    margin-top: 5px;
+}

@@ -55,6 +55,27 @@ class MessageService:
         return message
 
 
+    async def create_file_message(self, chat_id: UUID, sender_id: UUID, file_url: str, file_type: str):
+
+        chat = await self.chat_service.get_chat(chat_id)
+
+        is_participant = await self.chat_participant_repo.is_participant(chat_id, sender_id)
+        if not is_participant:
+            raise ForbiddenError()
+
+        message = Message(
+            chat_id=chat_id,
+            sender_id=sender_id,
+            file_url=file_url,
+            file_type=file_type
+        )
+
+        self.session.add(message)
+        await self.session.commit()
+
+        return message
+
+
     async def get_message(self, message_id: UUID) -> Message:
         message = await self.repo.get(message_id)
         if not message:

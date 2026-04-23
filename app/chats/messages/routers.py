@@ -1,7 +1,9 @@
-from uuid import UUID
+import os
+
+from uuid import UUID, uuid4
 from typing import List, Dict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 
 from app.chats.messages.schemas import MessageOut, MessageCreate, MessageUnreadOut
 from app.chats.messages.service import MessageService
@@ -9,6 +11,9 @@ from app.core.deps import get_message_service, get_current_user
 from app.users.users.models import User
 
 router = APIRouter(prefix="/messages", tags=["Chats | Messages"])
+
+UPLOAD_DIR = "media"
+
 
 
 # -----------------------------
@@ -84,6 +89,24 @@ async def edit_message(
         user_id=user.id,
         data=data
     )
+
+# -----------------------------
+# UPLOAD FILE
+# -----------------------------
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    ext = file.filename.split(".")[-1]
+    filename = f"{uuid4()}.{ext}"
+
+    path = os.path.join(UPLOAD_DIR, filename)
+
+    with open(path, "wb") as buffer:
+        buffer.write(await file.read())
+
+    return {
+        "url": f"/media/{filename}",
+        "type": file.content_type
+    }
 
 
 # -----------------------------

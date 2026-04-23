@@ -7,6 +7,7 @@ from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 from app.chats.managing.manager import ConnectionManager
+from app.chats.managing.utils import map_file_type
 from app.chats.messages.schemas import MessageCreate
 from app.chats.messages.service import MessageService
 from app.common.errors import ForbiddenError
@@ -75,6 +76,8 @@ class WebSocketService:
                     "id": str(m.id),
                     "sender_id": str(m.sender_id),
                     "text": m.text,
+                    "file_url": m.file_url,
+                    "file_type": m.file_type.value if m.file_type else None,
                     "created_at": m.created_at.isoformat()
                 }
                 for m in messages
@@ -130,6 +133,37 @@ class WebSocketService:
                         })
                     )
                     continue
+
+                # FILE UPLOAD
+                if event["type"] == mt.FILE.value:
+                    data = event.get("data", {})
+
+                    file_url = data.get("url")
+                    file_type_raw = data.get("file_type")
+
+                    if not file_url:
+                        continue
+
+                    file_type = map_file_type(file_type_raw)
+
+                    message = await self.message_service.create_file_message(
+                        chat_id=chat_id,
+                        sender_id=user_id,
+                        file_url=file_url,
+                        file_type=file_type
+                    )
+
+                    await self.manager.broadcast(
+                        chat_id,
+                        dumps({
+                            "type": mt.FILE.value,
+                            "data": {
+                                "sender_id": str(user_id),
+                                "file_url": message.file_url,
+                                "file_type": message.file_type.value
+                            }
+                        })
+                    )
 
                 # SAVE MESSAGE
                 if event["type"] == mt.TEXT.value:

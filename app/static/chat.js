@@ -1,5 +1,9 @@
 let socket = null;
+let typingTimeout = null;
 
+// =====================
+// CONNECT
+// =====================
 function connect() {
     const chatId = document.getElementById("chatId").value;
     const token = document.getElementById("token").value;
@@ -11,8 +15,6 @@ function connect() {
     };
 
     socket.onmessage = (event) => {
-        console.log("RAW:", event.data); // DEBUG
-
         const eventData = JSON.parse(event.data);
 
         switch (eventData.type) {
@@ -27,22 +29,23 @@ function connect() {
 
             case "TYPING":
                 const typingEl = document.getElementById("typingIndicator");
-
-                if (eventData.data.is_typing) {
-                    typingEl.textContent = `User ${eventData.data.user_id} is typing...`;
-                } else {
-                    typingEl.textContent = "";
-                }
+                typingEl.textContent = eventData.data.is_typing
+                    ? `User ${eventData.data.user_id} is typing...`
+                    : "";
                 break;
 
             case "HISTORY":
                 eventData.data.forEach(msg => {
-                    log(`${msg.sender_id}: ${msg.text}`);
+                    renderMessage(msg);
                 });
                 break;
 
             case "TEXT":
-                log(`${eventData.data.sender_id}: ${eventData.data.text}`);
+                renderMessage(eventData.data);
+                break;
+
+            case "FILE":
+                renderMessage(eventData.data);
                 break;
 
             case "JOIN_TO_CHAT":
@@ -58,15 +61,13 @@ function connect() {
         }
     };
 
-    socket.onclose = () => {
-        log("Disconnected");
-    };
-
-    socket.onerror = (err) => {
-        log("Error: " + err);
-    };
+    socket.onclose = () => log("Disconnected");
+    socket.onerror = (err) => log("Error: " + err);
 }
 
+// =====================
+// SEND TEXT
+// =====================
 function sendMessage() {
     const input = document.getElementById("messageInput");
 
@@ -80,43 +81,121 @@ function sendMessage() {
     input.value = "";
 }
 
-function disconnect() {
-    if (socket) {
-        socket.close();
+// =====================
+// SEND FILE (🔥 окремо!)
+// =====================
+async function sendFile() {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Select file first");
+        return;
     }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // 1. upload
+    const res = await fetch("/messages/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+
+    if (!data.url) {
+    alert("Upload failed");
+    return;
 }
 
+    // 2. send через websocket
+    socket.send(JSON.stringify({
+        type: "FILE",
+        data: {
+            url: data.url,
+            file_type: data.type
+        }
+    }));
+}
+
+// =====================
+// DISCONNECT
+// =====================
+function disconnect() {
+    if (socket) socket.close();
+}
+
+// =====================
+// UI
+// =====================
 function log(message) {
     const li = document.createElement("li");
     li.textContent = message;
     document.getElementById("messages").appendChild(li);
 }
 
+function renderMessage(msg) {
+    const li = document.createElement("li");
+
+    // TEXT
+    if (msg.text) {
+        li.textContent = `${msg.sender_id}: ${msg.text}`;
+    }
+
+    // FILE
+    if (msg.file_url) {
+        const container = document.createElement("div");
+
+        const sender = document.createElement("div");
+        sender.textContent = msg.sender_id;
+
+        container.appendChild(sender);
+
+        //  IMAGE preview
+        if (msg.file_type === "IMAGE" || msg.file_type?.startsWith("image")) {
+            const img = document.createElement("img");
+            img.src = msg.file_url;
+            img.style.maxWidth = "200px";
+            img.style.display = "block";
+
+            container.appendChild(img);
+        } else {
+            // 📎 download link
+            const link = document.createElement("a");
+            link.href = msg.file_url;
+            link.textContent = "Download file";
+            link.target = "_blank";
+
+            container.appendChild(link);
+        }
+
+        li.appendChild(container);
+    }
+
+    document.getElementById("messages").appendChild(li);
+}
+
+// =====================
+// TYPING
+// =====================
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("connectBtn").addEventListener("click", connect);
-});
 
-let typingTimeout = null;
+    document.getElementById("messageInput").addEventListener("input", () => {
+        if (!socket) return;
 
-document.getElementById("messageInput").addEventListener("input", () => {
-    if (!socket) return;
-
-    // почав друкувати
-    socket.send(JSON.stringify({
-        type: "TYPING",
-        data: {
-            is_typing: true
-        }
-    }));
-
-    // debounce (зупинився друкувати)
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => {
         socket.send(JSON.stringify({
             type: "TYPING",
-            data: {
-                is_typing: false
-            }
+            data: { is_typing: true }
         }));
-    }, 500);
+
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+            socket.send(JSON.stringify({
+                type: "TYPING",
+                data: { is_typing: false }
+            }));
+        }, 500);
+    });
 });
