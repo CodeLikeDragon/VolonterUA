@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
@@ -17,3 +18,8 @@ class MessageOut(BaseModel):
     read_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MessageUnreadOut(BaseModel):
+    count: int
+    messages: List[MessageOut]

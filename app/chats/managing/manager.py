@@ -16,7 +16,8 @@ class ConnectionManager:
         self.active_connections[chat_id].append(websocket)
 
     def disconnect(self, chat_id: UUID, websocket: WebSocket):
-        self.active_connections[chat_id].remove(websocket)
+        if websocket in self.active_connections[chat_id]:
+            self.active_connections[chat_id].remove(websocket)
 
     async def send_personal(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
@@ -28,7 +29,8 @@ class ConnectionManager:
             try:
                 await connection.send_text(message)
             except Exception:
-                connections.remove(connection)
+                if connection in connections:
+                    connections.remove(connection)
 
 
 manager = ConnectionManager()

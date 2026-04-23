@@ -66,6 +66,10 @@ class MessageService:
         return await self.repo.get_by_chat_id(chat_id)
 
 
+    async def get_unread_messages(self, chat_id: UUID, user_id: UUID) -> list[Message] and int:
+        return await self.repo.get_unread_messages(chat_id, user_id)
+
+
     async def get_last_messages(self, chat_id: UUID, limit: int = 50) -> list[Message]:
         return await self.repo.get_last_messages(chat_id, limit)
 

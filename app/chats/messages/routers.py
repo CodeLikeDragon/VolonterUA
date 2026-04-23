@@ -3,7 +3,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 
-from app.chats.messages.schemas import MessageOut, MessageCreate
+from app.chats.messages.schemas import MessageOut, MessageCreate, MessageUnreadOut
 from app.chats.messages.service import MessageService
 from app.core.deps import get_message_service, get_current_user
 from app.users.users.models import User
@@ -31,6 +31,22 @@ async def get_messages_by_chat(
     service: MessageService = Depends(get_message_service)
 ):
     return await service.get_messages_by_chat(chat_id)
+
+
+# -----------------------------
+# GET UNREAD CHAT MESSAGES
+# -----------------------------
+@router.get("/chat/{chat_id}/unread", response_model=MessageUnreadOut)
+async def get_unread_messages(
+    chat_id: UUID,
+    user: User = Depends(get_current_user),
+    service: MessageService = Depends(get_message_service)
+):
+    messages, count = await service.get_unread_messages(chat_id, user.id)
+    return {
+        "count": count,
+        "messages": messages
+    }
 
 
 # -----------------------------

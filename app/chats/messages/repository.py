@@ -55,6 +55,22 @@ class MessageRepository:
         return result.scalars().all()
 
 
+    async def get_unread_messages(self, chat_id: UUID, user_id: UUID) -> list[Message] and int:
+        stmt = (
+            select(Message)
+            .where(
+                Message.chat_id == chat_id,
+                Message.sender_id != user_id,
+                Message.read_at.is_(None)
+            )
+            .order_by(Message.created_at.desc())
+        )
+
+        result = await self.session.execute(stmt)
+        messages = result.scalars().all()
+        return (messages, len(messages))
+
+
     async def mark_as_read(self, chat_id: UUID, user_id: UUID) -> None:
         stmt = (
             select(Message)
