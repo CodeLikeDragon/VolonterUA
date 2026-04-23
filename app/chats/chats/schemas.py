@@ -8,6 +8,13 @@ class ChatCreate(BaseModel):
     request_id: UUID
 
 
+class ChatListItem(BaseModel):
+    chat_id: UUID
+    last_message: str | None
+    last_message_at: datetime | None
+    unread_count: int
+
+
 class ChatOut(BaseModel):
     id: UUID
     request_id: UUID

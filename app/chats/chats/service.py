@@ -68,6 +68,20 @@ class ChatService:
         return chat
 
 
+    async def get_user_chats_list(self, user_id: UUID):
+        rows = await self.repo.get_user_chats_list(user_id)
+
+        return [
+            {
+                "chat_id": row[0],
+                "last_message": row[1],
+                "last_message_at": row[2],
+                "unread_count": row[3]
+            }
+            for row in rows
+        ]
+
+
     async def delete_chat(self, chat_id: UUID) -> None:
 
         chat = await self.get_chat(chat_id)
