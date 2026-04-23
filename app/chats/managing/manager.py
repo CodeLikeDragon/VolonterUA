@@ -9,6 +9,7 @@ class ConnectionManager:
     def __init__(self):
         # chat_id → connection list
         self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
+        self.user_connections: dict[UUID, int] = defaultdict(int)
 
     async def connect(self, chat_id: UUID, websocket: WebSocket):
         await websocket.accept()

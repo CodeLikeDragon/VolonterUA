@@ -17,6 +17,14 @@ function connect() {
 
         switch (eventData.type) {
 
+            case "USER_ONLINE":
+                log(`🟢 ${eventData.data.user_id} online`);
+                break;
+
+            case "USER_OFFLINE":
+                log(`🔴 ${eventData.data.user_id} offline`);
+                break;
+
             case "TYPING":
                 const typingEl = document.getElementById("typingIndicator");
 

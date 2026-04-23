@@ -50,6 +50,19 @@ class WebSocketService:
 
         # CONNECT
         await self.manager.connect(chat_id, websocket)
+        self.manager.user_connections[user_id] += 1
+
+        # USER ONLINE
+        if self.manager.user_connections[user_id] == 1:
+            await self.manager.broadcast(
+                chat_id,
+                dumps({
+                    "type": mt.USER_ONLINE.value,
+                    "data": {
+                        "user_id": str(user_id)
+                    }
+                })
+            )
 
         # HISTORY
         messages = await self.message_service.get_last_messages(chat_id)
@@ -100,7 +113,7 @@ class WebSocketService:
 
         try:
             while True:
-
+                # TEXT RECEIVER
                 raw = await websocket.receive_text()
                 event = json.loads(raw)
 
@@ -142,7 +155,10 @@ class WebSocketService:
                     )
 
         except WebSocketDisconnect:
-            self.manager.disconnect(chat_id, websocket)
+            # DISCONNECT
+            if websocket in self.manager.active_connections[chat_id]:
+                self.manager.disconnect(chat_id, websocket)
+
             await self.manager.broadcast(
                 chat_id,
                 dumps({
@@ -152,3 +168,19 @@ class WebSocketService:
                     }
                 })
             )
+
+            # USER OFFLINE
+            if self.manager.user_connections[user_id] > 0:
+                self.manager.user_connections[user_id] -= 1
+
+            if self.manager.user_connections[user_id] == 0:
+            # реально офлайн
+                await self.manager.broadcast(
+                    chat_id,
+                    dumps({
+                        "type": mt.USER_OFFLINE.value,
+                        "data": {
+                            "user_id": str(user_id)
+                        }
+                    })
+                )
