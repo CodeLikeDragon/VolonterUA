@@ -32,6 +32,19 @@ class MessageRepository:
         return result.scalar_one_or_none()
 
 
+    async def get_last_messages(self, chat_id: UUID, limit: int = 50) -> list[Message]:
+        stmt = (
+            select(Message)
+            .where(Message.chat_id == chat_id)
+            .order_by(Message.created_at.desc())
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        messages = result.scalars().all()
+
+        return list(reversed(messages))
+
+
     async def get_by_chat_id(self, chat_id: UUID) -> List[Message]:
         stmt = (
             select(Message)

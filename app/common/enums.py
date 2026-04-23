@@ -35,6 +35,17 @@ class ChatParticipantRole(StrEnum):
     CREATOR = "CREATOR"
     MEMBER = "MEMBER"
 
+class MessageType(StrEnum):
+    TEXT = "TEXT"
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    AUDIO = "AUDIO"
+
+    JOIN_TO_CHAT = "JOIN_TO_CHAT"
+    LEAVE = "LEAVE"
+
+    HISTORY = "HISTORY"
+
 
 # Хелпер: у SQLite немає нативних ENUM, тому ставимо native_enum=False і зберігаємо як TEXT
 def sa_enum(enum_cls):

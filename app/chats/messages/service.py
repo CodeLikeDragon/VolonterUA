@@ -66,6 +66,10 @@ class MessageService:
         return await self.repo.get_by_chat_id(chat_id)
 
 
+    async def get_last_messages(self, chat_id: UUID, limit: int = 50) -> list[Message]:
+        return await self.repo.get_last_messages(chat_id, limit)
+
+
     async def mark_message_read(self, chat_id: UUID, user_id: UUID) -> None:
         await self.repo.mark_as_read(chat_id=chat_id, user_id=user_id)
         await self.session.commit()

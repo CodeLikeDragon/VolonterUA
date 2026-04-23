@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 from json import dumps
 from datetime import datetime
@@ -10,6 +11,7 @@ from app.chats.messages.schemas import MessageCreate
 from app.chats.messages.service import MessageService
 from app.common.errors import ForbiddenError
 from app.core.security import decode_access_token
+from app.common.enums import MessageType as mt
 
 
 class WebSocketService:
@@ -49,47 +51,77 @@ class WebSocketService:
         # CONNECT
         await self.manager.connect(chat_id, websocket)
 
+        # HISTORY
+        messages = await self.message_service.get_last_messages(chat_id)
+
+        print("SENDING HISTORY:", len(messages))
+
+        await websocket.send_text(dumps({
+            "type": mt.HISTORY.value,
+            "data": [
+                {
+                    "id": str(m.id),
+                    "sender_id": str(m.sender_id),
+                    "text": m.text,
+                    "created_at": m.created_at.isoformat()
+                }
+                for m in messages
+            ]
+        }))
+
+        # LOGS PARTICIPANTS
         participants = await self.message_service.chat_participant_repo.get_chat_participants(chat_id)
         print("PARTICIPANTS:", participants)
         print("USER:", user_id)
 
+        # BROADCAST
         await self.manager.broadcast(
             chat_id,
             dumps({
-                "type": "join",
-                "user_id": str(user_id)
+                "type": mt.JOIN_TO_CHAT,
+                "data": {
+                    "user_id": str(user_id)
+                }
             })
         )
 
         try:
             while True:
-                text = await websocket.receive_text()
+                raw = await websocket.receive_text()
+
+                event = json.loads(raw)
 
                 # SAVE MESSAGE
-                message = await self.message_service.create_message(
-                    chat_id=chat_id,
-                    sender_id=user_id,
-                    data=MessageCreate(text=text)
-                )
+                if event["type"] == mt.TEXT:
+                    text = event["data"]["text"]
 
-                # BROADCAST
-                await self.manager.broadcast(
-                    chat_id,
-                    dumps({
-                        "type": "text_message",
-                        "chat_id": str(chat_id),
-                        "sender_id": str(user_id),
-                        "text": message.text,
-                        "created_at": datetime.utcnow().isoformat()
-                    })
-                )
+                    message = await self.message_service.create_message(
+                        chat_id=chat_id,
+                        sender_id=user_id,
+                        data=MessageCreate(text=text)
+                    )
+
+                    await self.manager.broadcast(
+                        chat_id,
+                        dumps({
+                            "type": mt.TEXT,
+                            "data": {
+                                "chat_id": str(chat_id),
+                                "sender_id": str(user_id),
+                                "text": message.text,
+                                "created_at": message.created_at.isoformat()
+                            }
+                        })
+                    )
 
         except WebSocketDisconnect:
             self.manager.disconnect(chat_id, websocket)
             await self.manager.broadcast(
                 chat_id,
                 dumps({
-                    "type": "leave",
-                    "user_id": str(user_id)
+                    "type": mt.LEAVE,
+                    "data": {
+                        "user_id": str(user_id)
+                    }
                 })
             )
