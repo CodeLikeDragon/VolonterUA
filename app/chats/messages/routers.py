@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import List
+from typing import List, Dict
 
 from fastapi import APIRouter, Depends
 
@@ -49,10 +49,18 @@ async def get_unread_messages(
     }
 
 
+@router.get("/unread/count", response_model=Dict[str, int])
+async def get_unread_count(
+    user: User = Depends(get_current_user),
+    service: MessageService = Depends(get_message_service)
+):
+    return {"count": await service.get_count_unread_messages_from_chats(user.id)}
+
+
 # -----------------------------
 # MARK AS READ
 # -----------------------------
-@router.patch("/chat/{chat_id}/read")
+@router.patch("/chat/{chat_id}/read", response_model=None)
 async def mark_messages_read(
     chat_id: UUID,
     user: User = Depends(get_current_user),
@@ -64,7 +72,7 @@ async def mark_messages_read(
 # -----------------------------
 # EDIT MESSAGE
 # -----------------------------
-@router.patch("/{message_id}")
+@router.patch("/{message_id}", response_model=MessageOut)
 async def edit_message(
     message_id: UUID,
     data: MessageCreate,
@@ -81,7 +89,7 @@ async def edit_message(
 # -----------------------------
 # DELETE MESSAGE (ADMIN / SYSTEM)
 # -----------------------------
-@router.delete("/{message_id}")
+@router.delete("/{message_id}", response_model=None)
 async def delete_message(
     message_id: UUID,
     service: MessageService = Depends(get_message_service)
@@ -92,7 +100,7 @@ async def delete_message(
 # -----------------------------
 # DELETE OWN MESSAGE
 # -----------------------------
-@router.delete("/{message_id}/me")
+@router.delete("/{message_id}/me", response_model=None)
 async def delete_my_message(
     message_id: UUID,
     user: User = Depends(get_current_user),
@@ -107,7 +115,7 @@ async def delete_my_message(
 # -----------------------------
 # DELETE OWN MESSAGES (MULTIPLE)
 # -----------------------------
-@router.delete("/me")
+@router.delete("/me", response_model=None)
 async def delete_my_messages(
     message_ids: list[UUID],
     user: User = Depends(get_current_user),
@@ -127,7 +135,7 @@ async def delete_my_messages(
 # -----------------------------
 # DELETE MULTIPLE MESSAGES (ADMIN / SYSTEM)
 # -----------------------------
-@router.delete("/")
+@router.delete("/", response_model=None)
 async def delete_messages(
     message_ids: list[UUID],
     service: MessageService = Depends(get_message_service)

@@ -5,6 +5,7 @@ from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
+from app.chats.chat_participants.models import ChatParticipant
 from app.chats.messages.models import Message
 from app.chats.messages.schemas import MessageCreate
 
@@ -69,6 +70,24 @@ class MessageRepository:
         result = await self.session.execute(stmt)
         messages = result.scalars().all()
         return (messages, len(messages))
+
+
+    async def get_count_unread_messages_from_chats(self, user_id: UUID) -> int:
+        stmt = (
+            select(func.count(Message.id))
+            .join(
+                ChatParticipant,
+                ChatParticipant.chat_id == Message.chat_id
+            )
+            .where(
+                ChatParticipant.user_id == user_id,  # my chats
+                Message.sender_id != user_id,                    # not my messages
+                Message.read_at.is_(None)                        # unread
+            )
+        )
+
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
 
 
     async def mark_as_read(self, chat_id: UUID, user_id: UUID) -> None:
