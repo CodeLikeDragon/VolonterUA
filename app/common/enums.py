@@ -1,6 +1,7 @@
 from enum import StrEnum
 from sqlalchemy import Enum as SAEnum
 
+
 class Gender(StrEnum):
     MALE = "MALE"
     FEMALE = "FEMALE"
@@ -40,6 +41,7 @@ class MessageType(StrEnum):
     IMAGE = "IMAGE"
     VIDEO = "VIDEO"
     AUDIO = "AUDIO"
+    FILE = "FILE"
 
     JOIN_TO_CHAT = "JOIN_TO_CHAT"
     LEAVE = "LEAVE"
@@ -51,6 +53,13 @@ class MessageType(StrEnum):
 
     USER_ONLINE = "USER_ONLINE"
     USER_OFFLINE = "USER_OFFLINE"
+
+class FileType(StrEnum):
+    TEXT = "TEXT"
+    IMAGE = "IMAGE"
+    FILE = "FILE"
+    VIDEO = "VIDEO"
+    AUDIO = "AUDIO"
 
 
 # Хелпер: у SQLite немає нативних ENUM, тому ставимо native_enum=False і зберігаємо як TEXT

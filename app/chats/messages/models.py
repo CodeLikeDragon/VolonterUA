@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Index, func, TEXT, DateTime
+from sqlalchemy import ForeignKey, Index, func, TEXT, DateTime, String, Enum
 from sqlalchemy.dialects.postgresql import UUID
 
+from app.common.enums import FileType, sa_enum
 from app.core.db import Base
 
 if TYPE_CHECKING:
@@ -36,6 +38,10 @@ class Message(Base):
     )
 
     text: Mapped[str] = mapped_column(TEXT, nullable=False)
+
+    file_url: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    file_type: Mapped[FileType | None] = mapped_column(sa_enum(FileType), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
