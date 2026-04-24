@@ -1,5 +1,6 @@
 let socket = null;
 let typingTimeout = null;
+let oldestMessageDate = null;
 
 // =====================
 // CONNECT
@@ -36,7 +37,11 @@ function connect() {
 
             case "HISTORY":
                 eventData.data.forEach(msg => {
-                    renderMessage(msg);
+                    renderMessage(msg, true);
+
+                    if (!oldestMessageDate || msg.created_at < oldestMessageDate) {
+                        oldestMessageDate = msg.created_at;
+                    }
                 });
                 break;
 
@@ -198,4 +203,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }));
         }, 500);
     });
+});
+
+// SCROLL EVENT LISTENER
+window.addEventListener("scroll", () => {
+    if (window.scrollY === 0 && oldestMessageDate) {
+
+        socket.send(JSON.stringify({
+            type: "LOAD_MORE",
+            data: {
+                before: oldestMessageDate
+            }
+        }));
+    }
 });

@@ -134,6 +134,30 @@ class WebSocketService:
                     )
                     continue
 
+                # SCROLL MESSAGES LOADER
+                if event["type"] == "LOAD_MORE":
+                    before = datetime.fromisoformat(event["data"]["before"])
+
+                    messages = await self.message_service.get_messages_before(
+                        chat_id=chat_id,
+                        before=before
+                    )
+
+                    await websocket.send_text(dumps({
+                        "type": mt.HISTORY.value,
+                        "data": [
+                            {
+                                "id": str(m.id),
+                                "sender_id": str(m.sender_id),
+                                "text": m.text,
+                                "file_url": m.file_url,
+                                "file_type": m.file_type.value if m.file_type else None,
+                                "created_at": m.created_at.isoformat()
+                            }
+                            for m in messages
+                        ]
+                    }))
+
                 # FILE UPLOAD
                 if event["type"] == mt.FILE.value:
                     data = event.get("data", {})

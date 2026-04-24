@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -93,6 +94,15 @@ class MessageService:
 
     async def get_last_messages(self, chat_id: UUID, limit: int = 50) -> list[Message]:
         return await self.repo.get_last_messages(chat_id, limit)
+
+
+    async def get_messages_before(
+            self,
+            chat_id: UUID,
+            before: datetime,
+            limit: int = 50
+    ) -> list[Message]:
+        return await self.repo.get_messages_before(chat_id, before, limit)
 
 
     async def get_count_unread_messages_from_chats(self, user_id: UUID) -> int:

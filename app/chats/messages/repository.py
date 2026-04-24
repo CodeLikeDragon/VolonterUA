@@ -46,6 +46,24 @@ class MessageRepository:
         return list(reversed(messages))
 
 
+    async def get_messages_before(self, chat_id: UUID, before: datetime, limit: int = 50) -> list[Message]:
+
+        stmt = (
+            select(Message)
+            .where(
+                Message.chat_id == chat_id,
+                Message.created_at < before
+            )
+            .order_by(Message.created_at.desc())
+            .limit(limit)
+        )
+
+        result = await self.session.execute(stmt)
+        messages = result.scalars().all()
+
+        return list(reversed(messages))
+
+
     async def get_by_chat_id(self, chat_id: UUID) -> List[Message]:
         stmt = (
             select(Message)
