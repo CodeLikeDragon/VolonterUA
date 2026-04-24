@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Index, func, TEXT, DateTime, String, Enum
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.common.enums import FileType, sa_enum
+from app.common.enums import FileType, sa_enum, MessageStatus
 from app.core.db import Base
 
 if TYPE_CHECKING:
@@ -42,6 +42,11 @@ class Message(Base):
     file_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
     file_type: Mapped[FileType | None] = mapped_column(sa_enum(FileType), nullable=True)
+
+    status: Mapped[MessageStatus] = mapped_column(
+        sa_enum(MessageStatus),
+        default=MessageStatus.SENT
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

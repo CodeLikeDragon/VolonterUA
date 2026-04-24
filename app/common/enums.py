@@ -61,6 +61,12 @@ class FileType(StrEnum):
     VIDEO = "VIDEO"
     AUDIO = "AUDIO"
 
+class MessageStatus(StrEnum):
+    SENT = "SENT"
+    DELIVERED = "DELIVERED"
+    READ = "READ"
+    ERROR = "ERROR"
+
 
 # Хелпер: у SQLite немає нативних ENUM, тому ставимо native_enum=False і зберігаємо як TEXT
 def sa_enum(enum_cls):
