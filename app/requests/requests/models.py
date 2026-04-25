@@ -13,6 +13,7 @@ from app.common.enums import sa_enum, RequestStatus
 if TYPE_CHECKING:
     from app.requests.request_items.models import RequestItem
     from app.requests.request_offers.models import RequestOffer
+    from app.reviews.models import Review
 
 
 class Request(Base):
@@ -54,6 +55,9 @@ class Request(Base):
         foreign_keys="RequestOffer.request_id",
         overlaps="accepted_offer",
     )
+
+    # relationships
+    reviews: Mapped[List["Review"]] = relationship(back_populates="request")
 
     __table_args__ = (
         Index("ix_requests_city_id", "city_id"),

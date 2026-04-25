@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.users.credentials.models import Credentials
     from app.users.refresh_tokens.models import RefreshToken
     from app.users.password_resets.models import PasswordReset
+    from app.reviews.models import Review
 
 
 class User(Base):
@@ -45,6 +46,9 @@ class User(Base):
     oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     password_resets: Mapped[list["PasswordReset"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    given_reviews: Mapped[list["Review"]] = relationship(back_populates="reviewer", foreign_keys="[Review.reviewer_id]")
+    received_reviews: Mapped[list["Review"]] = relationship(back_populates="target_user", foreign_keys="[Review.target_user_id]")
 
     __table_args__ = (
         Index("ix_users_is_active", "is_active"),
