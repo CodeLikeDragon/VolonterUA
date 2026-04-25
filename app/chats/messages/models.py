@@ -45,7 +45,8 @@ class Message(Base):
 
     status: Mapped[MessageStatus] = mapped_column(
         sa_enum(MessageStatus),
-        default=MessageStatus.SENT
+        server_default=MessageStatus.SENT.value,
+        nullable=False
     )
 
     created_at: Mapped[datetime] = mapped_column(

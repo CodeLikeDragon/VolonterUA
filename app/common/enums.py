@@ -49,6 +49,7 @@ class MessageType(StrEnum):
     HISTORY = "HISTORY"
 
     READ = "READ"
+    DELIVERED = "DELIVERED"
     TYPING = "TYPING"
 
     USER_ONLINE = "USER_ONLINE"

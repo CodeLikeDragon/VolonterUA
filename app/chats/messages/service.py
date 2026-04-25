@@ -96,12 +96,7 @@ class MessageService:
         return await self.repo.get_last_messages(chat_id, limit)
 
 
-    async def get_messages_before(
-            self,
-            chat_id: UUID,
-            before: datetime,
-            limit: int = 50
-    ) -> list[Message]:
+    async def get_messages_before(self, chat_id: UUID, before: datetime, limit: int = 50) -> list[Message]:
         return await self.repo.get_messages_before(chat_id, before, limit)
 
 
@@ -112,6 +107,10 @@ class MessageService:
     async def mark_message_read(self, chat_id: UUID, user_id: UUID) -> None:
         await self.repo.mark_as_read(chat_id=chat_id, user_id=user_id)
         await self.session.commit()
+
+
+    async def mark_as_delivered(self, message_id: UUID) -> None:
+        await self.repo.mark_as_delivered(message_id=message_id)
 
 
     async def edit_message(self, message_id: UUID, user_id: UUID, data: MessageCreate) -> Message:

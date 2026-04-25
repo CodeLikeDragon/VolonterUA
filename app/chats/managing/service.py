@@ -1,6 +1,5 @@
-import json
 from uuid import UUID
-from json import dumps
+from json import dumps, loads
 from datetime import datetime
 
 from fastapi import WebSocket
@@ -10,7 +9,6 @@ from app.chats.managing.manager import ConnectionManager
 from app.chats.managing.utils import map_file_type
 from app.chats.messages.schemas import MessageCreate
 from app.chats.messages.service import MessageService
-from app.common.errors import ForbiddenError
 from app.core.security import decode_access_token
 from app.common.enums import MessageType as mt
 
@@ -22,7 +20,6 @@ class WebSocketService:
         manager: ConnectionManager,
         message_service: MessageService,
     ):
-
         self.manager = manager
         self.message_service = message_service
 
@@ -33,27 +30,30 @@ class WebSocketService:
         chat_id: UUID,
         token: str
     ):
+        # =====================
         # AUTH
+        # =====================
         payload = decode_access_token(token)
-
         user_id = UUID(payload.get("sub"))
 
+        # =====================
         # ACCESS CHECK
+        # =====================
         participants = await self.message_service.chat_participant_repo.get_chat_participants(chat_id)
 
-        print("PARTICIPANTS:", [p.user_id for p in participants])
-        print("USER:", user_id)
-
         if user_id not in [p.user_id for p in participants]:
-            print("NOT IN PARTICIPANTS")
             await websocket.close(code=403)
             return
 
+        # =====================
         # CONNECT
+        # =====================
         await self.manager.connect(chat_id, websocket)
         self.manager.user_connections[user_id] += 1
 
+        # =====================
         # USER ONLINE
+        # =====================
         if self.manager.user_connections[user_id] == 1:
             await self.manager.broadcast(
                 chat_id,
@@ -65,9 +65,10 @@ class WebSocketService:
                 })
             )
 
+        # =====================
         # HISTORY
+        # =====================
         messages = await self.message_service.get_last_messages(chat_id)
-        print("SENDING HISTORY:", len(messages))
 
         await websocket.send_text(dumps({
             "type": mt.HISTORY.value,
@@ -78,13 +79,16 @@ class WebSocketService:
                     "text": m.text,
                     "file_url": m.file_url,
                     "file_type": m.file_type.value if m.file_type else None,
-                    "created_at": m.created_at.isoformat()
+                    "created_at": m.created_at.isoformat(),
+                    "status": m.status.value
                 }
                 for m in messages
             ]
         }))
 
+        # =====================
         # MARK AS READ
+        # =====================
         await self.message_service.mark_message_read(chat_id, user_id)
 
         await self.manager.broadcast(
@@ -98,12 +102,9 @@ class WebSocketService:
             })
         )
 
-        # LOGS PARTICIPANTS
-        participants = await self.message_service.chat_participant_repo.get_chat_participants(chat_id)
-        print("PARTICIPANTS:", participants)
-        print("USER:", user_id)
-
-        # BROADCAST
+        # =====================
+        # JOIN EVENT
+        # =====================
         await self.manager.broadcast(
             chat_id,
             dumps({
@@ -114,13 +115,17 @@ class WebSocketService:
             })
         )
 
+        # =====================
+        # MAIN LOOP
+        # =====================
         try:
             while True:
-                # TEXT RECEIVER
                 raw = await websocket.receive_text()
-                event = json.loads(raw)
+                event = loads(raw)
 
-                # TYPING INDICATOR
+                # -----------------
+                # TYPING
+                # -----------------
                 if event["type"] == mt.TYPING.value:
                     await self.manager.broadcast(
                         chat_id,
@@ -134,9 +139,14 @@ class WebSocketService:
                     )
                     continue
 
-                # SCROLL MESSAGES LOADER
-                if event["type"] == "LOAD_MORE":
-                    before = datetime.fromisoformat(event["data"]["before"])
+                # -----------------
+                # LOAD MORE
+                # -----------------
+                elif event["type"] == "LOAD_MORE":
+                    try:
+                        before = datetime.fromisoformat(event["data"]["before"])
+                    except Exception:
+                        continue
 
                     messages = await self.message_service.get_messages_before(
                         chat_id=chat_id,
@@ -152,14 +162,18 @@ class WebSocketService:
                                 "text": m.text,
                                 "file_url": m.file_url,
                                 "file_type": m.file_type.value if m.file_type else None,
-                                "created_at": m.created_at.isoformat()
+                                "created_at": m.created_at.isoformat(),
+                                "status": m.status.value
                             }
                             for m in messages
                         ]
                     }))
+                    continue
 
-                # FILE UPLOAD
-                if event["type"] == mt.FILE.value:
+                # -----------------
+                # FILE
+                # -----------------
+                elif event["type"] == mt.FILE.value:
                     data = event.get("data", {})
 
                     file_url = data.get("url")
@@ -182,15 +196,34 @@ class WebSocketService:
                         dumps({
                             "type": mt.FILE.value,
                             "data": {
+                                "message_id": str(message.id),
                                 "sender_id": str(user_id),
                                 "file_url": message.file_url,
-                                "file_type": message.file_type.value
+                                "file_type": message.file_type.value,
+                                "created_at": message.created_at.isoformat(),
+                                "status": message.status.value
                             }
                         })
                     )
+                    # MARK AS DELIVERED
+                    await self.message_service.mark_as_delivered(message.id)
 
-                # SAVE MESSAGE
-                if event["type"] == mt.TEXT.value:
+                    # SEND DELIVERED EVENT
+                    await self.manager.broadcast(
+                        chat_id,
+                        dumps({
+                            "type": mt.DELIVERED.value,
+                            "data": {
+                                "message_id": str(message.id)
+                            }
+                        })
+                    )
+                    continue
+
+                # -----------------
+                # TEXT
+                # -----------------
+                elif event["type"] == mt.TEXT.value:
                     text = event["data"]["text"]
 
                     message = await self.message_service.create_message(
@@ -206,14 +239,34 @@ class WebSocketService:
                             "data": {
                                 "chat_id": str(chat_id),
                                 "sender_id": str(user_id),
+                                "message_id": str(message.id),
                                 "text": message.text,
-                                "created_at": message.created_at.isoformat()
+                                "created_at": message.created_at.isoformat(),
+                                "status": message.status.value
                             }
                         })
                     )
+                    # =====================
+                    # MARK AS DELEVERED
+                    # =====================
+                    await self.message_service.mark_as_delivered(message.id)
 
+                    await self.manager.broadcast(
+                        chat_id,
+                        dumps({
+                            "type": mt.DELIVERED.value,
+                            "data": {
+                                "message_id": str(message.id)
+                            }
+                        })
+                    )
+                    continue
+
+
+        # =====================
+        # DISCONNECT
+        # =====================
         except WebSocketDisconnect:
-            # DISCONNECT
             if websocket in self.manager.active_connections[chat_id]:
                 self.manager.disconnect(chat_id, websocket)
 
@@ -232,7 +285,6 @@ class WebSocketService:
                 self.manager.user_connections[user_id] -= 1
 
             if self.manager.user_connections[user_id] == 0:
-            # реально офлайн
                 await self.manager.broadcast(
                     chat_id,
                     dumps({

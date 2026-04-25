@@ -3,11 +3,12 @@ from uuid import UUID
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 
 from app.chats.chat_participants.models import ChatParticipant
 from app.chats.messages.models import Message
 from app.chats.messages.schemas import MessageCreate
+from app.common.enums import MessageStatus
 
 
 class MessageRepository:
@@ -107,23 +108,29 @@ class MessageRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one()
 
-
-    async def mark_as_read(self, chat_id: UUID, user_id: UUID) -> None:
+    async def mark_as_read(self, chat_id: UUID, user_id: UUID):
         stmt = (
-            select(Message)
+            update(Message)
             .where(
                 Message.chat_id == chat_id,
                 Message.sender_id != user_id,
-                Message.read_at.is_(None)
+                Message.status == MessageStatus.DELIVERED
+            )
+            .values(
+                status=MessageStatus.READ,
+                read_at=func.now()
             )
         )
-        result = await self.session.execute(stmt)
-        messages = result.scalars().all()
+        await self.session.execute(stmt)
 
-        for msg in messages:
-            msg.read_at = func.now()
 
-        await self.session.flush()
+    async def mark_as_delivered(self, message_id: UUID) -> None:
+        stmt = (
+            update(Message)
+            .where(Message.id == message_id)
+            .values(status=MessageStatus.DELIVERED)
+        )
+        await self.session.execute(stmt)
 
 
     async def edit(self, message: Message, data: MessageCreate) -> Message:
