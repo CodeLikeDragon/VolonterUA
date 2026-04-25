@@ -1,0 +1,229 @@
+# Chat Module — Current State & Roadmap
+
+## ✅ Реалізовано (V1)
+
+### 1. WebSocket Core
+- Підключення через токен (JWT)
+- Перевірка доступу до чату (participants)
+- ConnectionManager (multi-user, multi-chat)
+- Обробка disconnect + cleanup
+
+---
+
+### 2. Event-based архітектура
+Підтримуються події:
+- TEXT
+- FILE
+- HISTORY
+- JOIN_TO_CHAT
+- LEAVE
+- TYPING
+- READ
+- USER_ONLINE
+- USER_OFFLINE
+- DELIVERED
+
+---
+
+### 3. Повідомлення
+- Створення текстових повідомлень
+- Створення file повідомлень
+- Збереження в БД
+- Валідація доступу (participant check)
+
+---
+
+### 4. Message Status System
+- SENT
+- DELIVERED
+- READ
+
+Логіка:
+- SENT → при створенні
+- DELIVERED → після broadcast
+- READ → при відкритті чату
+
+---
+
+### 5. History
+- Завантаження останніх повідомлень при connect
+- Формат JSON
+- Reverse order (старі → нові)
+
+---
+
+### 6. Pagination (базова)
+- LOAD_MORE
+- Завантаження повідомлень до певної дати (before)
+
+---
+
+### 7. Typing Indicator
+- Відправка is_typing: true/false
+- debounce на фронті
+
+---
+
+### 8. Online / Offline
+- Трекінг через user_connections
+- USER_ONLINE (коли перше підключення)
+- USER_OFFLINE (коли останнє відключення)
+
+---
+
+### 9. File Upload
+- HTTP upload endpoint
+- Збереження file_url
+- Відправка через WebSocket
+- Підтримка типів (image, video, file, audio)
+
+---
+
+### 10. Read Status
+- mark_message_read()
+- read_at timestamp
+- broadcast READ event
+
+---
+
+## 🧱 Архітектура
+
+- Repository layer (DB)
+- Service layer (business logic)
+- WebSocket layer (real-time)
+- Event-based communication
+- Async SQLAlchemy
+
+---
+
+## ⚠️ Технічний борг (потрібно доробити)
+
+### 1. Pagination (важливо)
+- Cursor-based pagination (не по datetime)
+- limit + cursor
+- уникнення дублювання повідомлень
+
+---
+
+### 2. Delivered логіка (спрощена)
+Зараз:
+- delivered одразу після broadcast
+
+Правильно:
+- delivered тільки якщо інший користувач онлайн
+
+---
+
+### 3. Broadcast оптимізація
+- не відправляти події самому собі (optional)
+- broadcast_except_sender
+
+---
+
+### 4. Error handling
+- try/catch для JSON parsing
+- валідація event["data"]
+
+---
+
+### 5. File handling
+- перевірка типу файлу
+- обмеження розміру
+- MIME validation
+
+---
+
+## 🚀 Майбутні фічі (Roadmap)
+
+### 🔹 High Priority
+
+#### 1. Message Reactions
+- 👍 ❤️ 🔥
+- окрема таблиця reactions
+- toggle реакцій
+
+---
+
+#### 2. Normal Pagination
+- cursor (message_id)
+- infinite scroll
+- без дублювання
+
+---
+
+#### 3. Message Editing
+- edit message
+- updated_at
+- broadcast UPDATE event
+
+---
+
+#### 4. Message Delete (soft delete)
+- is_deleted
+- "Message deleted"
+
+---
+
+### 🔹 Medium Priority
+
+#### 5. Push Notifications
+- якщо user offline
+- email / push / websocket fallback
+
+---
+
+#### 6. Attachments preview
+- image preview
+- video player
+- file download UI
+
+---
+
+#### 7. Chat metadata
+- last message
+- unread count
+- chat preview
+
+---
+
+### 🔹 Advanced (V2+)
+
+#### 8. Redis
+- масштабування WebSocket
+- pub/sub між інстансами
+
+---
+
+#### 9. Message Queue (RabbitMQ / Kafka)
+- event-driven система
+- decoupling сервісів
+
+---
+
+#### 10. Media Storage
+- S3 / Cloud storage
+- CDN
+
+---
+
+#### 11. Per-user delivery/read status
+- не глобальний статус
+- таблиця message_statuses
+
+---
+
+## 📊 Поточний стан
+
+text Chat Backend Progress: ~85%
+
+---
+
+## 🎯 Висновок
+
+Поточна реалізація:
+- вже придатна для MVP
+- має правильну архітектуру
+- легко масштабується
+
+Наступний логічний крок:
+→ Pagination (нормальна) або Reaction
