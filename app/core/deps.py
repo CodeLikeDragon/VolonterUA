@@ -15,6 +15,8 @@ from app.chats.messages.service import MessageService
 from app.common.errors import UnauthorizedError
 from app.core.db import async_session_factory
 from app.core.security import decode_access_token
+from app.reviews.repository import ReviewRepository
+from app.reviews.service import ReviewService
 
 # repos
 from app.users.users.repository import UserRepository
@@ -315,6 +317,42 @@ def get_country_service(
         session=session,
         repo=CountryRepository(session),
         audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    )
+
+
+# =========================
+# REVIEWS & RATING
+# =========================
+
+def get_review_service(
+        session: AsyncSession = Depends(get_session)
+):
+    repo = ReviewRepository(session)
+    user_repo = UserRepository(session)
+    city_repo = CityRepository(session)
+    request_repo = RequestRepository(session)
+    item_repo = RequestItemRepository(session)
+    offer_repo = RequestOfferRepository(session)
+    assignment_repo = RequestItemAssignmentRepository(session)
+    audit_repo = AuditEventRepository(session)
+
+    user_service = UserService(session=session, repo=user_repo, city_repo=city_repo)
+    audit_service = AuditEventService(session=session, repo=audit_repo)
+    request_service = RequestService(
+        session=session,
+        repo=request_repo,
+        item_repo=item_repo,
+        offer_repo=offer_repo,
+        assignment_repo=assignment_repo,
+        user_repo=user_repo,
+        audit_service=audit_service
+    )
+
+    return ReviewService(
+        session=session,
+        repo=repo,
+        user_service=user_service,
+        request_service=request_service
     )
 
 
