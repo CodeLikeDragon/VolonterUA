@@ -5,8 +5,10 @@ from pydantic import BaseModel
 
 
 class ReviewCreate(BaseModel):
+    request_id: UUID
+    target_user_id: UUID
     rating: int
-    comment: str | None
+    comment: str | None = None
 
 class ReviewOut(BaseModel):
     id: UUID

@@ -53,11 +53,11 @@ class ReviewRepository:
         return result.scalar_one_or_none()
 
 
-    async def create(self, reviewer_id: UUID, target_user_id: UUID, request_id: UUID, data: ReviewCreate) -> Review:
+    async def create(self, reviewer_id: UUID, data: ReviewCreate) -> Review:
         review = Review(
             reviewer_id=reviewer_id,
-            target_user_id=target_user_id,
-            request_id=request_id,
+            target_user_id=data.target_user_id,
+            request_id=data.request_id,
             rating=data.rating,
             comment=data.comment
         )

@@ -66,14 +66,12 @@ class ReviewService:
 
 
     async def create(
-            self,
-            reviewer_id: UUID,
-            target_user_id: UUID,
-            request_id: UUID,
-            data: ReviewCreate
+        self,
+        reviewer_id: UUID,
+        data: ReviewCreate
     ) -> Review:
 
-        request = await self.request_service.get_request(request_id)
+        request = await self.request_service.get_request(data.request_id)
 
         # request must be fulfilled
         if request.status != RequestStatus.FULFILLED:
@@ -81,7 +79,7 @@ class ReviewService:
 
         # check user exists
         await self.user_service.get_user(reviewer_id)
-        await self.user_service.get_user(target_user_id)
+        await self.user_service.get_user(data.target_user_id)
 
         # participants
         participants = [request.created_by]
@@ -98,17 +96,17 @@ class ReviewService:
         else:
             expected_target = request.created_by
 
-        if not expected_target or target_user_id != expected_target:
+        if not expected_target or data.target_user_id != expected_target:
             raise ConflictError("Invalid target user")
 
         # self-review protection
-        if reviewer_id == target_user_id:
+        if reviewer_id == data.target_user_id:
             raise ConflictError("Cannot review yourself")
 
         # duplicate
         existing = await self.repo.get_by_reviewer_and_request(
             reviewer_id=reviewer_id,
-            request_id=request_id
+            request_id=data.request_id
         )
 
         if existing:
@@ -121,8 +119,8 @@ class ReviewService:
         # create
         review = await self.repo.create(
             reviewer_id=reviewer_id,
-            target_user_id=target_user_id,
-            request_id=request_id,
+            target_user_id=data.target_user_id,
+            request_id=data.request_id,
             data=data
         )
 
