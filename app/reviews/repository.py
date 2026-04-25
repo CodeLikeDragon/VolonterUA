@@ -19,6 +19,11 @@ class ReviewRepository:
         return result.scalar_one_or_none()
 
 
+    async def get_all(self) -> list[Review]:
+        result = await self.session.execute(select(Review))
+        return result.scalars().all()
+
+
     async def get_by_request(self, request_id: UUID) -> list[Review]:
         stmt = (
             select(Review)
