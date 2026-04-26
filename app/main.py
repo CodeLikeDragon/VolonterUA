@@ -17,6 +17,7 @@ from app.requests.requests.routes import router as requests_router
 from app.requests.request_items.routes import router as request_items_router
 from app.requests.request_offers.routes import router as request_offers_router
 from app.requests.request_item_assignment.routes import router as request_item_assignment_router
+from app.requests.request_images.routes import router as request_images_router
 
 from app.notifications.routes import router as notifications_router
 
@@ -61,6 +62,7 @@ app.include_router(requests_router)
 app.include_router(request_items_router)
 app.include_router(request_offers_router)
 app.include_router(request_item_assignment_router)
+app.include_router(request_images_router)
 
 app.include_router(notifications_router)
 

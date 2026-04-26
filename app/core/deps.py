@@ -15,6 +15,8 @@ from app.chats.messages.service import MessageService
 from app.common.errors import UnauthorizedError
 from app.core.db import async_session_factory
 from app.core.security import decode_access_token
+from app.requests.request_images.repository import RequestImageRepository
+from app.requests.request_images.service import RequestImageService
 from app.reviews.repository import ReviewRepository
 from app.reviews.service import ReviewService
 
@@ -273,6 +275,20 @@ def get_request_item_assignment_service(
         offer_repo=RequestOfferRepository(session),
         notification_service=NotificationService(NotificationsRepository(session)),
         audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    )
+
+
+def get_request_images_service(
+    session: AsyncSession = Depends(get_session)
+):
+    repo = RequestImageRepository(session)
+    request_repo = RequestImageRepository(session)
+    user_repo = UserRepository(session)
+
+    return RequestImageService(
+        session=session,
+        repo=repo,
+        user_repo=user_repo
     )
 
 
