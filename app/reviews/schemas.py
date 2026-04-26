@@ -1,7 +1,7 @@
 from uuid import UUID
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class ReviewCreate(BaseModel):
@@ -19,12 +19,18 @@ class ReviewOut(BaseModel):
     rating: int
     comment: str
 
+    model_config = ConfigDict(from_attributes=True)
+
 class PaginatedReviewsOut(BaseModel):
     items: list[ReviewOut]
     total: int
     page: int
     limit: int
 
+    model_config = ConfigDict(from_attributes=True)
+
 class UserRatingOut(BaseModel):
     total_reviews: int
     avg_rating: float
+
+    model_config = ConfigDict(from_attributes=True)
