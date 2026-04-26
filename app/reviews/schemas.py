@@ -18,3 +18,9 @@ class ReviewOut(BaseModel):
     created_at: datetime
     rating: int
     comment: str
+
+class PaginatedReviewsOut(BaseModel):
+    items: list[ReviewOut]
+    total: int
+    page: int
+    limit: int

@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,8 +34,25 @@ class ReviewService:
         return review
 
 
-    async def get_reviews(self) -> list[Review]:
-        return await self.repo.get_all()
+    async def get_reviews_with_count(self, page: int = 1, limit: int = 20) -> dict[str, Any]:
+
+        if page < 1:
+            raise ConflictError("Page must be >= 1")
+
+        if limit < 1 or limit > 100:
+            raise ConflictError("Limit must be between 1 and 100")
+
+        offset = (page - 1) * limit
+
+        items = await self.repo.get_all(offset=offset, limit=limit)
+        total = await self.repo.count()
+
+        return {
+            "items": items,
+            "total": total,
+            "page": page,
+            "limit": limit
+        }
 
 
     async def get_by_request(self, request_id: UUID) -> list[Review]:
@@ -78,7 +97,6 @@ class ReviewService:
             raise ConflictError("Request is not completed")
 
         # check user exists
-        await self.user_service.get_user(reviewer_id)
         await self.user_service.get_user(data.target_user_id)
 
         # participants
@@ -129,6 +147,9 @@ class ReviewService:
         return review
 
 
-    async def delete(self, review_id: UUID) -> None:
+    async def delete(self, review_id: UUID, reviewer_id: UUID) -> None:
         review = await self.get_review(review_id)
+        if review.reviewer_id != reviewer_id:
+            raise ForbiddenError("You can delete only your reviews")
         await self.repo.delete(review)
+        await self.session.commit()

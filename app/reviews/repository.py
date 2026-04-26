@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.reviews.models import Review
@@ -13,14 +13,27 @@ class ReviewRepository:
         self.session = session
 
 
+    async def count(self) -> int:
+        stmt = select(func.count(Review.id))
+        result = await self.session.execute(stmt)
+
+        return result.scalar_one()
+
+
     async def get(self, review_id: UUID) -> Review | None:
         stmt = select(Review).where(Review.id == review_id)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
 
-    async def get_all(self) -> list[Review]:
-        result = await self.session.execute(select(Review))
+    async def get_all(self, offset: int = 0, limit: int = 20) -> list[Review]:
+        stmt = (
+            select(Review)
+            .order_by(Review.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
         return result.scalars().all()
 
 

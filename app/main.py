@@ -1,8 +1,10 @@
+import app.models_registry
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-import app.models_registry
 from app.common.exceptions import register_exception_handlers
 
 from app.auth.routes import router as auth_router
@@ -24,6 +26,8 @@ from app.chats.chats.routers import router as chats_router
 from app.chats.messages.routers import router as messages_router
 from app.chats.managing.routers import router as ws_router
 
+from app.reviews.routes import router as review_router
+
 
 app = FastAPI(title="VolonterUA")
 register_exception_handlers(app)
@@ -36,7 +40,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 app.add_middleware(
     TrustedHostMiddleware,
@@ -65,6 +68,8 @@ app.include_router(consents_router)
 
 app.include_router(chats_router)
 app.include_router(messages_router)
+
+app.include_router(review_router)
 
 
 app.include_router(ws_router)
