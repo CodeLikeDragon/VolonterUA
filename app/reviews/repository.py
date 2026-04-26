@@ -20,6 +20,17 @@ class ReviewRepository:
         return result.scalar_one()
 
 
+    async def get_user_rating(self, user_id: UUID) -> tuple[int, float]:
+        stmt = select(
+            func.count(Review.id),
+            func.avg(Review.rating)
+        ).where(Review.target_user_id == user_id)
+
+        result = await self.session.execute(stmt)
+        count, avg = result.one()
+
+        return count, avg
+
     async def get(self, review_id: UUID) -> Review | None:
         stmt = select(Review).where(Review.id == review_id)
         result = await self.session.execute(stmt)

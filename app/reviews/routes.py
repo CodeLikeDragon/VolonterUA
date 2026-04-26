@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from app.core.deps import get_review_service, get_current_user_id
-from app.reviews.schemas import ReviewOut, ReviewCreate, PaginatedReviewsOut
+from app.reviews.schemas import ReviewOut, ReviewCreate, PaginatedReviewsOut, UserRatingOut
 from app.reviews.service import ReviewService
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
@@ -32,6 +32,14 @@ async def get_by_target_user(
     service: ReviewService = Depends(get_review_service)
 ):
     return await service.get_by_target_user(user_id)
+
+
+@router.get("/users/{user_id}/rating", response_model=UserRatingOut)
+async def get_user_rating(
+    user_id: UUID,
+    service: ReviewService = Depends(get_review_service)
+):
+    return await service.get_user_rating(user_id)
 
 
 @router.get("/me/{request_id}", response_model=ReviewOut)

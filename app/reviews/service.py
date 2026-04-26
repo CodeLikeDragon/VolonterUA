@@ -54,6 +54,20 @@ class ReviewService:
             "limit": limit
         }
 
+    async def get_user_rating(self, user_id: UUID) -> dict[str, Any]:
+        count, avg = await self.repo.get_user_rating(user_id)
+
+        if count == 0:
+            return {
+                "total_reviews": 0,
+                "avg_rating": 0.0
+            }
+
+        return {
+            "total_reviews": count,
+            "avg_rating": round(avg, 2)
+        }
+
 
     async def get_by_request(self, request_id: UUID) -> list[Review]:
         return await self.repo.get_by_request(request_id)

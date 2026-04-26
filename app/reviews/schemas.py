@@ -24,3 +24,7 @@ class PaginatedReviewsOut(BaseModel):
     total: int
     page: int
     limit: int
+
+class UserRatingOut(BaseModel):
+    total_reviews: int
+    avg_rating: float
