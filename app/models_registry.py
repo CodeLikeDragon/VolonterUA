@@ -11,6 +11,7 @@ from app.requests.requests import models as _requests_models  # noqa: F401
 from app.requests.request_item_assignment import models as _request_item_assignment_models # noqa: F401
 from app.requests.request_items import models as _request_items_models  # noqa: F401
 from app.requests.request_offers import models as _request_offers_models  # noqa: F401
+from app.requests.request_images import models as _request_images_models  # noqa: F401
 
 from app.geo.cities import models as _cities_models  # noqa: F401
 from app.geo.countries import models as _countries_models  # noqa: F401
