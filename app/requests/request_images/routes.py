@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -10,23 +11,23 @@ from app.users.users.models import User
 router = APIRouter(prefix="/request-images", tags=["Requests | Images"])
 
 
-@router.get("/images/{image_id}")
+@router.get("/images/{image_id}", response_model=RequestImageOut)
 async def get_image(
     image_id: UUID,
     service: RequestImageService = Depends(get_request_images_service)
-) -> RequestImageOut:
+):
     return await service.get_image(image_id)
 
 
-@router.get("/requests/{request_id}/images", response_model=RequestImageOut)
+@router.get("/requests/{request_id}/images", response_model=List[RequestImageOut])
 async def get_images_by_request(
     request_id: UUID,
     service: RequestImageService = Depends(get_request_images_service)
-) -> RequestImageOut:
+):
     return await service.get_images_by_request(request_id)
 
 
-@router.post("/requests/{request_id}/images", response_model=RequestImageOut)
+@router.post("/upload", response_model=RequestImageOut)
 async def add_image(
     data: RequestImageCreate,
     user_id: UUID = Depends(get_current_user_id),

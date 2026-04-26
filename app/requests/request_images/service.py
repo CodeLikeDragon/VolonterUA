@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.common.errors import NotFoundError, ForbiddenError
 from app.requests.request_images.models import RequestImage
 from app.requests.request_images.repository import RequestImageRepository
@@ -12,20 +14,18 @@ class RequestImageService:
 
     def __init__(
         self,
+        session: AsyncSession,
         repo: RequestImageRepository,
         request_repo: RequestRepository,
         user_repo: UserRepository
     ):
+        self.session = session
         self.repo = repo
         self.request_repo = request_repo
         self.user_repo = user_repo
 
 
     async def add_image(self, data: RequestImageCreate, user_id: UUID) -> RequestImage:
-
-        user = await self.user_repo.get_by_id(user_id)
-        if user is None:
-            raise NotFoundError("User not found")
 
         request = await self.request_repo.get_by_id(data.request_id)
         if not request:
@@ -35,7 +35,13 @@ class RequestImageService:
         if request.created_by != user_id:
             raise ForbiddenError("You cannot add image to this request")
 
-        return await self.repo.create(data)
+        image = await self.repo.create(
+            request_id=data.request_id,
+            image_url=data.image_url
+        )
+
+        await self.session.commit()
+        return image
 
 
     async def get_image(self, image_id: UUID) -> RequestImage | None:
@@ -49,7 +55,7 @@ class RequestImageService:
 
     async def get_images_by_request(self, request_id: UUID) -> list[RequestImage]:
 
-        request = await self.request_repo.get_by_id(request_id)
+        request = await self.request_repo.get_by_id(request_id=request_id)
         if request is None:
             raise NotFoundError("Request not found")
 
@@ -57,10 +63,6 @@ class RequestImageService:
 
 
     async def delete_image(self, image_id: UUID, user_id: UUID) -> None:
-
-        user = await self.user_repo.get_by_id(user_id)
-        if user is None:
-            raise NotFoundError("User not found")
 
         image: RequestImage = await self.get_image(image_id)
 
@@ -70,3 +72,4 @@ class RequestImageService:
             raise ForbiddenError("You cannot delete this image")
 
         await self.repo.delete(image)
+        await self.session.commit()

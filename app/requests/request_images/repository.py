@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.requests.request_images.models import RequestImage
 from app.requests.request_images.schemas import RequestImageCreate
@@ -13,10 +14,10 @@ class RequestImageRepository:
         self.session = session
 
 
-    async def create(self, data: RequestImageCreate) -> RequestImage:
+    async def create(self, request_id: UUID, image_url: str) -> RequestImage:
         image = RequestImage(
-            request_id=data.request_id,
-            image_url=data.image_url
+            request_id=request_id,
+            image_url=image_url
         )
         self.session.add(image)
         await self.session.flush()
@@ -24,7 +25,12 @@ class RequestImageRepository:
 
 
     async def get(self, image_id: UUID) -> RequestImage | None:
-        stmt = select(RequestImage).where(RequestImage.id == image_id)
+        stmt = (
+            select(RequestImage)
+            .where(RequestImage.id == image_id)
+            .options(selectinload(RequestImage.request))
+        )
+
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 

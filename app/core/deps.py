@@ -282,12 +282,13 @@ def get_request_images_service(
     session: AsyncSession = Depends(get_session)
 ):
     repo = RequestImageRepository(session)
-    request_repo = RequestImageRepository(session)
+    request_repo = RequestRepository(session)
     user_repo = UserRepository(session)
 
     return RequestImageService(
         session=session,
         repo=repo,
+        request_repo=request_repo,
         user_repo=user_repo
     )
 
