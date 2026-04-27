@@ -22,6 +22,7 @@ class RequestImage(Base):
         server_default=func.gen_random_uuid(),
     )
 
+    public_id: Mapped[str] = mapped_column(String, nullable=False)
     request_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("requests.id", ondelete="CASCADE")

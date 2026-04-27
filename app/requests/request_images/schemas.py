@@ -9,6 +9,7 @@ class RequestImageCreate(BaseModel):
 class RequestImageOut(BaseModel):
     id: UUID
     request_id: UUID
+    public_id: str
     image_url: str
 
     model_config = ConfigDict(from_attributes=True)

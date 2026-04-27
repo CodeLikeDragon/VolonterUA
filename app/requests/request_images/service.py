@@ -29,7 +29,7 @@ class RequestImageService:
         self.storage = storage
 
 
-    async def add_image(self, request_id: UUID, file: UploadFile, user_id: UUID) -> RequestImage:
+    async def add_image(self, request_id: UUID, files: list[UploadFile], user_id: UUID) -> list[RequestImage]:
 
         request = await self.request_repo.get_by_id(request_id)
         if not request:
@@ -39,15 +39,20 @@ class RequestImageService:
         if request.created_by != user_id:
             raise ForbiddenError("You cannot add image to this request")
 
-        image_url = await self.storage.upload_image(file=file, request_id=request_id)
+        images = []
 
-        image = await self.repo.create(
-            request_id=request_id,
-            image_url=image_url
-        )
+        for file in files:
+            image_url, public_id = await self.storage.upload_image(file=file, request_id=request_id)
+
+            image = await self.repo.create(
+                request_id=request_id,
+                image_url=image_url,
+                public_id=public_id
+            )
+            images.append(image)
 
         await self.session.commit()
-        return image
+        return images
 
 
     async def get_image(self, image_id: UUID) -> RequestImage | None:
@@ -68,14 +73,24 @@ class RequestImageService:
         return await self.repo.get_by_request(request_id)
 
 
-    async def delete_image(self, image_id: UUID, user_id: UUID) -> None:
+    async def delete_image(self, images_id: UUID, user_id: UUID) -> None:
 
-        image: RequestImage = await self.get_image(image_id)
+        images = []
 
-        request = image.request
+        for id in images_id:
+            image: RequestImage = await self.get_image(id)
+            images.append(image)
+
+        if len(images) < 1:
+            raise NotFoundError("Image not uploaded")
+
+        request = images[0].request
 
         if request.created_by != user_id:
             raise ForbiddenError("You cannot delete this image")
 
-        await self.repo.delete(image)
+        for image in images:
+            await self.storage.delete_image(image.public_id)
+            await self.repo.delete(image)
+
         await self.session.commit()

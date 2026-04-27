@@ -15,10 +15,11 @@ class RequestImageRepository:
         self.session = session
 
 
-    async def create(self, request_id: UUID, image_url: str) -> RequestImage:
+    async def create(self, public_id: str, request_id: UUID, image_url: str) -> RequestImage:
         image = RequestImage(
             request_id=request_id,
-            image_url=image_url
+            image_url=image_url,
+            public_id=public_id
         )
         self.session.add(image)
         await self.session.flush()
