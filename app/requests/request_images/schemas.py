@@ -4,7 +4,6 @@ from pydantic import ConfigDict, BaseModel
 
 class RequestImageCreate(BaseModel):
     request_id: UUID
-    image_url: str
 
 
 class RequestImageOut(BaseModel):

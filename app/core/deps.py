@@ -13,6 +13,7 @@ from app.chats.managing.service import WebSocketService
 from app.chats.messages.repository import MessageRepository
 from app.chats.messages.service import MessageService
 from app.common.errors import UnauthorizedError
+from app.common.storage.cloudinary_service import CloudinaryService
 from app.core.db import async_session_factory
 from app.core.security import decode_access_token
 from app.requests.request_images.repository import RequestImageRepository
@@ -71,6 +72,14 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
+
+
+# =========================
+# STORAGE
+# =========================
+
+def get_cloudinary_service():
+    return CloudinaryService()
 
 
 # =========================
@@ -284,12 +293,14 @@ def get_request_images_service(
     repo = RequestImageRepository(session)
     request_repo = RequestRepository(session)
     user_repo = UserRepository(session)
+    storage = CloudinaryService
 
     return RequestImageService(
         session=session,
         repo=repo,
         request_repo=request_repo,
-        user_repo=user_repo
+        user_repo=user_repo,
+        storage=storage
     )
 
 

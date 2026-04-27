@@ -1,8 +1,10 @@
 from uuid import UUID
 
+from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.common.errors import NotFoundError, ForbiddenError
+from app.common.errors import NotFoundError, ForbiddenError, BadRequestError
+from app.common.storage.cloudinary_service import CloudinaryService
 from app.requests.request_images.models import RequestImage
 from app.requests.request_images.repository import RequestImageRepository
 from app.requests.request_images.schemas import RequestImageCreate
@@ -17,17 +19,19 @@ class RequestImageService:
         session: AsyncSession,
         repo: RequestImageRepository,
         request_repo: RequestRepository,
-        user_repo: UserRepository
+        user_repo: UserRepository,
+        storage: CloudinaryService
     ):
         self.session = session
         self.repo = repo
         self.request_repo = request_repo
         self.user_repo = user_repo
+        self.storage = storage
 
 
-    async def add_image(self, data: RequestImageCreate, user_id: UUID) -> RequestImage:
+    async def add_image(self, request_id: UUID, file: UploadFile, user_id: UUID) -> RequestImage:
 
-        request = await self.request_repo.get_by_id(data.request_id)
+        request = await self.request_repo.get_by_id(request_id)
         if not request:
             raise NotFoundError("Request not found")
 
@@ -35,9 +39,11 @@ class RequestImageService:
         if request.created_by != user_id:
             raise ForbiddenError("You cannot add image to this request")
 
+        image_url = await self.storage.upload_image(file=file, request_id=request_id)
+
         image = await self.repo.create(
-            request_id=data.request_id,
-            image_url=data.image_url
+            request_id=request_id,
+            image_url=image_url
         )
 
         await self.session.commit()
