@@ -16,6 +16,8 @@ class RequestCreate(BaseModel):
     description: Optional[str] = None
     city_id: Optional[UUID] = None
     address: Optional[str] = Field(None, max_length=255)
+    latitude: float | None = None
+    longitude: float | None = None
     # items: List[RequestItemCreate] = Field(default_factory=list)
 
 
@@ -44,6 +46,8 @@ class RequestCreateOut(BaseModel):
     created_by: UUID
     created_at: datetime
     updated_at: datetime
+    latitude: float | None
+    longitude: float | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,6 +66,9 @@ class RequestOut(BaseModel):
 
     created_at: datetime
     updated_at: datetime
+
+    latitude: float | None
+    longitude: float | None
 
     items: List[RequestItemOut]
     offers: List[RequestOfferOut]
@@ -105,6 +112,9 @@ class _RequestOut(BaseModel):
 
     created_at: datetime
     updated_at: datetime
+
+    latitude: float | None
+    longitude: float | None
 
 
 class RequestFullOut(BaseModel):
