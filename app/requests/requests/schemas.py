@@ -129,3 +129,10 @@ class RequestFullOut(BaseModel):
     offers_count: int
     items_count: int
     assignments_count: int
+
+
+class RequestGeoOut(BaseModel):
+    id: UUID
+    title: str
+    latitude: float | None
+    longitude: float | None

@@ -1,9 +1,10 @@
+from typing import Optional, Tuple
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.enums import RequestStatus
-from app.common.errors import NotFoundError, ForbiddenError, ConflictError
+from app.common.errors import NotFoundError, ForbiddenError, ConflictError, BadRequestError
 from app.audit.service import AuditEventService
 from app.common.pagination.schemas import PaginationParams
 from app.requests.request_item_assignment.repository import RequestItemAssignmentRepository
@@ -144,6 +145,55 @@ class RequestService:
             assignments_count=assignments_count
         )
 
+
+    async def get_geo_requests(self, near: str, radius: float, pagination: PaginationParams) -> RequestFiltersOut:
+
+        radius_km = self._parse_radius(radius)
+
+        lat, lng = self._parse_near(near)
+        return await self.repo.get_by_location(
+            lat=lat,
+            lng=lng,
+            radius_km=radius_km,
+            limit=pagination.limit,
+            offset=pagination.offset
+        )
+
+        return await self.repo.list(limit=pagination.limit, offset=pagination.offset)
+
+
+    def _parse_near(self, near: str) -> Tuple[float, float]:
+
+        if not near:
+            raise BadRequestError("Please provide required coordinates")
+
+        try:
+            lat_str, lng_str = near.split(",")
+            lat = float(lat_str)
+            lng = float(lng_str)
+        except Exception:
+            raise ValueError("Invalid near format. Use lat,lng")
+
+        if not (-90 <= lat <= 90):
+            raise ValueError("Invalid latitude")
+
+        if not (-180 <= lng <= 180):
+            raise ValueError("Invalid longitude")
+
+        return lat, lng
+
+
+    def _parse_radius(self, radius: float) -> float:
+
+        try:
+            radius = float(radius)
+        except Exception:
+            raise ValueError("Invalid radius")
+
+        if radius < 0:
+            raise BadRequestError("Please provide correct radius value")
+
+        return float(radius)
 
     # -----------------------------
     # UPDATE

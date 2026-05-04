@@ -3,12 +3,13 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_, and_
 from sqlalchemy.orm import selectinload
+from math import radians, sin, cos, asin, sqrt
 
 from app.common.pagination.schemas import PaginationParams
 from app.requests.request_items.models import RequestItem
 from app.requests.request_items.schemas import RequestItemOut
 from app.requests.requests.models import Request
-from app.requests.requests.schemas import RequestCreate, RequestFilters, RequestFiltersOut, RequestOut
+from app.requests.requests.schemas import RequestCreate, RequestFilters, RequestFiltersOut, RequestOut, _RequestOut
 
 
 class RequestRepository:
@@ -59,7 +60,7 @@ class RequestRepository:
         return result.scalar_one_or_none()
 
 
-    async def list(self, limit: int, offset: int):
+    async def list(self, limit: int, offset: int) -> List[Request]:
         stmt = (
             select(Request)
             .options(
@@ -164,3 +165,33 @@ class RequestRepository:
             page=pagination.page,
             limit=pagination.limit
         )
+
+
+    async def get_by_location(self, lat: float, lng: float, radius_km: float, limit: int, offset: int) -> List[Request]:
+
+        result = await self.session.execute(select(Request))
+        requests = result.scalars().all()
+
+        return [
+            r for r in requests
+
+            if r.latitude is not None
+            and r.longitude is not None
+            and self._distance(lat, lng, r.latitude, r.longitude) <= radius_km
+        ]
+
+
+    def _distance(self, lat1, lon1, lat2, lon2) -> float:
+
+        # Haversine formula
+        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+
+        dlon = lon2 - lon1
+
+        dlat = lat2 - lat1
+
+        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+        c = 2 * asin(sqrt(a))
+        r = 6371  # km
+
+        return c * r

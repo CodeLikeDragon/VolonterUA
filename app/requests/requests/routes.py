@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.common.pagination.models import Page
 from app.common.pagination.pagination import get_pagination_params
@@ -13,7 +13,7 @@ from app.requests.request_items.schemas import RequestItemOut, RequestItemCreate
 from app.requests.request_items.service import RequestItemService
 from app.requests.requests.service import RequestService
 from app.requests.requests.schemas import RequestOut, RequestCreate, RequestCreateOut, RequestFiltersOut, \
-    RequestFilters, RequestUpdate, RequestFullOut
+    RequestFilters, RequestUpdate, RequestFullOut, RequestGeoOut
 
 router = APIRouter(prefix="/requests", tags=["Requests | Requests"])
 
@@ -46,6 +46,16 @@ async def get_requests(
         filters=filters,
         pagination=pagination,
     )
+
+
+@router.get("/geo", response_model=list[RequestGeoOut])
+async def get_geo_requests(
+    near: Optional[str] = Query(None, example="52.52,13.41"),
+    radius: Optional[float] = Query(None, example=10),
+    pagination: PaginationParams = Depends(get_pagination_params),
+    service: RequestService = Depends(get_request_service)
+):
+    return await service.get_geo_requests(near=near, radius=radius, pagination=pagination)
 
 
 @router.get("/{request_id}", response_model=RequestOut)
