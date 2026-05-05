@@ -16,6 +16,7 @@ from app.requests.requests.repository import RequestRepository
 from app.requests.requests.schemas import RequestCreate, RequestUpdate, RequestFilters, RequestFiltersOut, \
     RequestFullOut, _RequestOut
 from app.users.users.repository import UserRepository
+from app.notifications.tasks import create_notification
 
 
 class RequestService:
@@ -53,6 +54,11 @@ class RequestService:
             event="request_created",
             user_id=user_id,
             data={"request_id": str(request.id)},
+        )
+
+        create_notification.delay(
+            user_id=request.created_by,
+            message="Request created successfully",
         )
 
         return request
