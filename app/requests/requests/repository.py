@@ -31,6 +31,8 @@ class RequestRepository:
             city_id=data.city_id,
             address=data.address,
             created_by=user_id,
+            latitude=data.latitude,
+            longitude=data.longitude
         )
         self.session.add(request)
         await self.session.flush()
