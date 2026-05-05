@@ -88,9 +88,14 @@ class RequestOfferService:
             raise ConflictError("Offer already exists")
 
         # notification
-        await self.notification_service.notify_new_offer(
-            request_owner_id=request.created_by,
-            request_id=request_id
+        create_notification.delay(
+            user_id=str(request.created_by),
+            title="New offer",
+            body="Someone offered help for your request",
+            meta={
+                "request_id": str(request_id),
+                "type": "Created"
+            }
         )
 
         # audit
@@ -102,11 +107,6 @@ class RequestOfferService:
             )
         except Exception:
             pass
-
-        create_notification.delay(
-            user_id=offer.user_id,
-            title="Offer created"
-        )
 
         return offer
 
@@ -183,8 +183,13 @@ class RequestOfferService:
             pass
 
         create_notification.delay(
-            user_id=offer.user_id,
-            title="Offer updated"
+            user_id=str(offer.user_id),
+            title="Offer updated",
+            body="Your offer has been successfully updated",
+            meta={
+                "request_id": str(offer.request_id),
+                "type": "Updated"
+            }
         )
 
         return offer
@@ -242,9 +247,14 @@ class RequestOfferService:
 
             await self.session.commit()
 
-        await self.notification_service.notify_offer_accepted(
-            helper_id=offer.user_id,
-            request_id=offer.request_id
+        create_notification.delay(
+            user_id=str(offer.user_id),
+            title="Offer accepted",
+            body="Your help offer was accepted",
+            meta={
+                "request_id": str(offer.request_id),
+                "type": "Accepted"
+            }
         )
 
         try:
@@ -255,11 +265,6 @@ class RequestOfferService:
             )
         except Exception:
             pass
-
-        create_notification.delay(
-            user_id=offer.user_id,
-            title="Offer accepted"
-        )
 
         return offer
 
@@ -286,9 +291,15 @@ class RequestOfferService:
             await self.session.rollback()
             raise ConflictError("Failed to decline offer")
 
-        await self.notification_service.notify_offer_declined(
-            helper_id=offer.user_id,
-            request_id=offer.request_id,
+
+        create_notification.delay(
+            user_id=str(offer.user_id),
+            title="Offer declined",
+            body="Your help offer was declined",
+            meta={
+                "request_id": str(request.id),
+                "type": "Declined"
+            }
         )
 
         try:
@@ -299,11 +310,6 @@ class RequestOfferService:
             )
         except Exception:
             pass
-
-        create_notification.delay(
-            user_id=offer.user_id,
-            title="Offer declined"
-        )
 
         return offer
 
@@ -341,6 +347,11 @@ class RequestOfferService:
             pass
 
         create_notification.delay(
-            user_id=offer.user_id,
-            title="Offer deleted"
+            user_id=str(offer.user_id),
+            title="Offer deleted",
+            body="Your help offer was deleted",
+            meta={
+                "request_id": str(offer.request_id),
+                "type": "Deleted"
+            }
         )

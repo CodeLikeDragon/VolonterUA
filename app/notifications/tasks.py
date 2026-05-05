@@ -1,6 +1,7 @@
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
+from app.common.enums import NotificationChannel
 from app.core.celery_app import celery_app
 from app.core.database_sync import SessionLocal
 from app.notifications.models import Notification
@@ -12,15 +13,25 @@ from app.notifications.models import Notification
 
 
 @celery_app.task
-def create_notification(user_id: UUID, title: str, message: str | None):
+def create_notification(
+    user_id: str,
+    title: str,
+    body: str | None,
+    meta: dict | None,
+    channel: str | None = None
+):
+
     db = SessionLocal()
 
     try:
+
         notification = Notification(
-            user_id=user_id,
+            user_id=UUID(user_id),
             title=title,
-            body=message,
-            sent_at=datetime.utcnow()
+            body=body,
+            channel=channel or NotificationChannel.IN_APP,
+            sent_at=datetime.now(timezone.utc),
+            meta=meta
         )
 
         db.add(notification)

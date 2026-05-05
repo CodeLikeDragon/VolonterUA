@@ -9,6 +9,7 @@ from app.common.enums import RequestStatus
 from app.common.errors import NotFoundError, BadRequestError, ConflictError
 from app.common.pagination.schemas import PaginationParams
 from app.notifications.service import NotificationService
+from app.notifications.tasks import create_notification
 
 from app.requests.request_item_assignment.models import RequestItemAssignment
 from app.requests.request_item_assignment.repository import RequestItemAssignmentRepository
@@ -96,8 +97,25 @@ class RequestItemAssignmentService:
             raise
 
 
-        await self.notification_service.notify_assignment_created(user_id=user_id, request_id=request.id)
+        create_notification.delay(
+            user_id=str(user_id),
+            title="You were assigned",
+            body="You have been assigned to a request",
+            meta={
+                "request_id": str(request.id),
+                "type": "Created"
+            }
+        )
 
+        create_notification.delay(
+            user_id=str(request.created_by),
+            title="You have a new assignment",
+            body=f"Assignment for your request '{request.title}' has been created.",
+            meta={
+                "request_id": str(request.id),
+                "type": "Created"
+            }
+        )
 
         # audit (safe)
         try:
