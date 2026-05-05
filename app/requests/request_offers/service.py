@@ -14,6 +14,7 @@ from app.common.enums import ChatParticipantRole
 from app.common.errors import NotFoundError, ConflictError
 from app.common.pagination.schemas import PaginationParams
 from app.notifications.service import NotificationService
+from app.notifications.tasks import create_notification
 
 from app.requests.request_offers.models import RequestOffer
 from app.requests.request_offers.repository import RequestOfferRepository
@@ -102,6 +103,11 @@ class RequestOfferService:
         except Exception:
             pass
 
+        create_notification.delay(
+            user_id=offer.user_id,
+            title="Offer created"
+        )
+
         return offer
 
     # -----------------------------
@@ -176,6 +182,11 @@ class RequestOfferService:
         except Exception:
             pass
 
+        create_notification.delay(
+            user_id=offer.user_id,
+            title="Offer updated"
+        )
+
         return offer
 
     # -----------------------------
@@ -245,6 +256,11 @@ class RequestOfferService:
         except Exception:
             pass
 
+        create_notification.delay(
+            user_id=offer.user_id,
+            title="Offer accepted"
+        )
+
         return offer
 
     # -----------------------------
@@ -284,6 +300,11 @@ class RequestOfferService:
         except Exception:
             pass
 
+        create_notification.delay(
+            user_id=offer.user_id,
+            title="Offer declined"
+        )
+
         return offer
 
     # -----------------------------
@@ -318,3 +339,8 @@ class RequestOfferService:
             )
         except Exception:
             pass
+
+        create_notification.delay(
+            user_id=offer.user_id,
+            title="Offer deleted"
+        )
