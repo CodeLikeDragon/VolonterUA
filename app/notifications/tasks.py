@@ -12,13 +12,13 @@ from app.notifications.models import Notification
 
 
 @celery_app.task
-def create_notification(user_id: UUID, message: str):
+def create_notification(user_id: UUID, title: str, message: str | None):
     db = SessionLocal()
 
     try:
         notification = Notification(
             user_id=user_id,
-            title="Notification created",
+            title=title,
             body=message,
             sent_at=datetime.utcnow()
         )
