@@ -25,9 +25,11 @@ from app.consents.routes import router as consents_router
 
 from app.chats.chats.routers import router as chats_router
 from app.chats.messages.routers import router as messages_router
-from app.chats.managing.routers import router as ws_router
+from app.chats.managing.routers import router as ws_chat_router
 
 from app.reviews.routes import router as review_router
+
+from app.ws.routes import router as ws_notifications_router
 
 
 app = FastAPI(title="VolonterUA")
@@ -35,7 +37,7 @@ register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 🔥 для тесту
+    allow_origins=["*"],  # для тесту
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,17 +67,24 @@ app.include_router(request_item_assignment_router)
 app.include_router(request_images_router)
 
 app.include_router(notifications_router)
+app.include_router(ws_notifications_router)
 
 app.include_router(consents_router)
 
 app.include_router(chats_router)
 app.include_router(messages_router)
+app.include_router(ws_chat_router)
 
 app.include_router(review_router)
 
 
-app.include_router(ws_router)
-
-
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/media", StaticFiles(directory="media"), name="media")
+
+
+@app.on_event("startup")
+async def startup():
+    import asyncio
+    from app.ws.redis_listener import redis_listener
+
+    asyncio.create_task(redis_listener())

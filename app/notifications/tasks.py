@@ -1,9 +1,11 @@
+from json import dumps
 from uuid import UUID
 from datetime import datetime, timezone
 
 from app.common.enums import NotificationChannel
 from app.core.celery_app import celery_app
 from app.core.database_sync import SessionLocal
+from app.core.redis import redis_client
 from app.notifications.models import Notification
 
 
@@ -36,6 +38,15 @@ def create_notification(
 
         db.add(notification)
         db.commit()
+
+        redis_client.publish(
+            f"user:{user_id}",
+            dumps({
+                "title": title,
+                "body": body,
+                "meta": meta
+            })
+        )
 
     finally:
         db.close()
