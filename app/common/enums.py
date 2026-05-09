@@ -45,15 +45,15 @@ class MessageType(StrEnum):
 
     JOIN_TO_CHAT = "JOIN_TO_CHAT"
     LEAVE = "LEAVE"
-
     HISTORY = "HISTORY"
-
     READ = "READ"
     DELIVERED = "DELIVERED"
     TYPING = "TYPING"
 
     USER_ONLINE = "USER_ONLINE"
     USER_OFFLINE = "USER_OFFLINE"
+
+    LOAD_MORE = "LOAD_MORE"
 
 class FileType(StrEnum):
     TEXT = "TEXT"
