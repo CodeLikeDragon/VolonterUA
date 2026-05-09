@@ -5,10 +5,13 @@ from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 from app.audit.service import AuditEventService
+
 from app.chats.managing.events.client.file import FileEvent
 from app.chats.managing.events.client.text import TextEvent
 from app.chats.managing.events.client.typing import TypingEvent
 from app.chats.managing.events.client.load_more import LoadMoreEvent
+from app.chats.managing.events.client.chat_opened import ChatOpenedEvent
+from app.chats.managing.events.client.chat_closed import ChatClosedEvent
 
 from app.chats.managing.events.system.read import ReadBroadcaster
 from app.chats.managing.events.system.join import UserJoinBroadcaster
@@ -48,6 +51,12 @@ class WebSocketService:
                 message_service=message_service
             ),
             mt.TYPING.value: TypingEvent(
+                manager=manager
+            ),
+            mt.CHAT_OPENED.value: ChatOpenedEvent(
+                manager=manager
+            ),
+            mt.CHAT_CLOSED.value: ChatClosedEvent(
                 manager=manager
             )
         }
@@ -92,7 +101,9 @@ class WebSocketService:
 
         participants = await self.message_service.chat_participant_repo.get_chat_participants(chat_id)
 
-        if user_id not in [p.user_id for p in participants]:
+        participant_ids = {p.user_id for p in participants}
+
+        if user_id not in participant_ids:
             await websocket.close(code=403)
             return
 
@@ -140,11 +151,16 @@ class WebSocketService:
             while True:
                 raw = await websocket.receive_text()
                 event = loads(raw)
+                event_type = event.get("type")
 
-                handler = self.event_client_handlers.get(event["type"])
+                handler = self.event_client_handlers.get(event_type)
 
                 if not handler:
-                    await websocket.send_json({"error": "Unknown event"})
+                    await websocket.send_json({
+                        "type": "ERROR",
+                        "message": "Unknown event"
+                    })
+                    continue
 
                 try:
                     await handler.handle(
@@ -154,6 +170,12 @@ class WebSocketService:
                         event=event
                     )
                 except Exception as e:
+                    await websocket.send_json({
+                        "type": mt.ERROR.value,
+                        "data": {
+                            "message": str(e)
+                        }
+                    })
                     self.audit_service.log_event(
                         event=event,
                         user_id=user_id,
@@ -168,6 +190,7 @@ class WebSocketService:
 
             if websocket in self.manager.active_connections[chat_id]:
                 self.manager.disconnect(chat_id, websocket)
+                self.manager.clear_active_chat(user_id=user_id)
 
             # USER LEAVE
 
