@@ -10,6 +10,7 @@ class ConnectionManager:
         # chat_id → connection list
         self.active_connections: dict[UUID, list[WebSocket]] = defaultdict(list)
         self.user_connections: dict[UUID, int] = defaultdict(int)
+        self.active_chats: dict[UUID, UUID] = {}  # key -> user_id, value -> chat_id
 
     async def connect(self, chat_id: UUID, websocket: WebSocket):
         await websocket.accept()
@@ -31,6 +32,15 @@ class ConnectionManager:
             except Exception:
                 if connection in connections:
                     connections.remove(connection)
+
+    def set_active_chat(self, user_id: UUID, chat_id: UUID):
+        self.active_chats[user_id] = chat_id
+
+    def clear_active_chat(self, user_id: UUID):
+        self.active_chats.pop(user_id, None)
+
+    def get_active_chat(self, user_id: UUID):
+        return self.active_chats.get(user_id)
 
 
 manager = ConnectionManager()

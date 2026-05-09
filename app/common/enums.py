@@ -55,6 +55,11 @@ class MessageType(StrEnum):
 
     LOAD_MORE = "LOAD_MORE"
 
+    CHAT_OPENED = "CHAT_OPENED"
+    CHAT_CLOSED = "CHAT_CLOSED"
+
+    ERROR = "ERROR"
+
 class FileType(StrEnum):
     TEXT = "TEXT"
     IMAGE = "IMAGE"
