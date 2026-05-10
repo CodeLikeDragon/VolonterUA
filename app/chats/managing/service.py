@@ -150,7 +150,15 @@ class WebSocketService:
         try:
             while True:
                 raw = await websocket.receive_text()
-                event = loads(raw)
+
+                try:
+                    event = loads(raw)
+                except Exception as e:
+                    await websocket.send_json({
+                        "type": mt.ERROR.value,
+                        "data": {str(e)}
+                    })
+
                 event_type = event.get("type")
 
                 handler = self.event_client_handlers.get(event_type)
@@ -176,7 +184,7 @@ class WebSocketService:
                             "message": str(e)
                         }
                     })
-                    self.audit_service.log_event(
+                    await self.audit_service.log_event(
                         event=event,
                         user_id=user_id,
                         data=e

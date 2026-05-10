@@ -4,6 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.chats.messages.models import Message
 from app.common.errors import NotFoundError
 from app.common.pagination.schemas import PaginationParams
 from app.notifications.models import Notification
@@ -20,6 +21,30 @@ class NotificationService:
     ):
         self.session = session
         self.repo = repo
+
+
+    async def create_smart_notification(
+        self,
+        recipient: UUID,
+        data: Message
+    ) -> Notification:
+
+        notification = Notification(
+            user_id=recipient,
+            title="New message",
+            body=data.text or "Sent an attachment",
+            sent_at=datetime.now(timezone.utc),
+            meta={
+                "chat_id": str(data.chat_id),
+                "message_id": str(data.id),
+                "created_at": data.created_at.isoformat()
+            }
+        )
+        notification = await self.repo.create(notification)
+
+        await self.session.commit()
+
+        return notification
 
 
     async def get_my_notifications(self, user_id: UUID, pagination: PaginationParams) -> List[Notification]:

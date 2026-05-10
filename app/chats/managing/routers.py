@@ -23,6 +23,36 @@ from app.users.users.service import UserService
 router = APIRouter(prefix="/ws", tags=["Chats"])
 
 
+@router.websocket("/notifications")
+async def notifications_ws(websocket: WebSocket):
+
+    token = websocket.query_params.get("token")
+
+    if not token:
+        await websocket.close(code=403)
+        return
+
+    payload = decode_access_token(token)
+
+    if not payload:
+        await websocket.close(code=403)
+        return
+
+    user_id = UUID(payload["sub"])
+
+    await manager.connect_notifications(user_id=user_id, websocket=websocket)
+
+    try:
+        while True:
+            await websocket.receive_text()
+
+    except WebSocketDisconnect:
+        manager.disconnect_notifications(
+            user_id=user_id,
+            websocket=websocket
+        )
+
+
 @router.websocket("/{chat_id}")
 async def websocket_endpoint(websocket: WebSocket, chat_id: str):
 
