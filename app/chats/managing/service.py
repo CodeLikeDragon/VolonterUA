@@ -1,10 +1,14 @@
 from uuid import UUID
-from json import loads
 
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
+from app.core.security import decode_access_token
+from app.common.enums import MessageType as mt
+
 from app.audit.service import AuditEventService
+
+from app.chats.managing.manager import ConnectionManager
 
 from app.chats.managing.events.client.file import FileEvent
 from app.chats.managing.events.client.text import TextEvent
@@ -13,7 +17,6 @@ from app.chats.managing.events.client.load_more import LoadMoreEvent
 from app.chats.managing.events.client.chat_opened import ChatOpenedEvent
 from app.chats.managing.events.client.chat_closed import ChatClosedEvent
 
-from app.chats.managing.events.system.read import ReadBroadcaster
 from app.chats.managing.events.system.join import UserJoinBroadcaster
 from app.chats.managing.events.system.history import HistoryBroadcaster
 from app.chats.managing.events.system.user_leave import UserLeaveBroadcaster
@@ -21,10 +24,9 @@ from app.chats.managing.events.system.user_online import UserOnlineBroadcaster
 from app.chats.managing.events.system.user_offline import UserOfflineBroadcaster
 
 from app.chats.messages.service import MessageService
-from app.chats.managing.manager import ConnectionManager
+from app.chats.messages.coordinator import ReadCoordinator
 
-from app.core.security import decode_access_token
-from app.common.enums import MessageType as mt
+from app.notifications.coordinator import NotificationCoordinator
 
 
 class WebSocketService:
@@ -33,19 +35,24 @@ class WebSocketService:
         self,
         manager: ConnectionManager,
         message_service: MessageService,
+        read_coordinator: ReadCoordinator,
+        notification_coordinator: NotificationCoordinator,
         audit_service: AuditEventService
     ):
         self.manager = manager
         self.message_service = message_service
+        self.read_coordinator = read_coordinator
         self.audit_service = audit_service
         self.event_client_handlers = {
             mt.TEXT.value: TextEvent(
                 manager=manager,
-                message_service=message_service
+                message_service=message_service,
+                notification_coordinator=notification_coordinator
             ),
             mt.FILE.value: FileEvent(
                 manager=manager,
-                message_service=message_service
+                message_service=message_service,
+                notification_coordinator=notification_coordinator
             ),
             mt.LOAD_MORE.value: LoadMoreEvent(
                 message_service=message_service
@@ -74,9 +81,6 @@ class WebSocketService:
                 manager=manager
             ),
             mt.LEAVE.value: UserLeaveBroadcaster(
-                manager=manager
-            ),
-            mt.READ.value: ReadBroadcaster(
                 manager=manager
             )
         }
@@ -132,10 +136,8 @@ class WebSocketService:
         # MARK AS READ
         # =====================
 
-        await self.message_service.mark_message_read(chat_id, user_id)
-
-        mark_as_read_broadcaster = self.system_broadcasts[mt.READ.value]
-        await mark_as_read_broadcaster.broadcast(chat_id=chat_id, user_id=user_id)
+        await self.message_service.mark_message_read(chat_id=chat_id, user_id=user_id)
+        await self.read_coordinator.handle_read(reader_id=user_id, chat_id=chat_id)
 
         # =====================
         # JOIN EVENT
@@ -149,15 +151,21 @@ class WebSocketService:
         # =====================
         try:
             while True:
-                raw = await websocket.receive_text()
 
                 try:
-                    event = loads(raw)
+                    event = await websocket.receive_json()
+
+                except WebSocketDisconnect:
+                    raise
+
                 except Exception as e:
                     await websocket.send_json({
                         "type": mt.ERROR.value,
-                        "data": {str(e)}
+                        "data": {
+                            "message": str(e)
+                        }
                     })
+                    continue
 
                 event_type = event.get("type")
 
@@ -177,6 +185,7 @@ class WebSocketService:
                         user_id=user_id,
                         event=event
                     )
+
                 except Exception as e:
                     await websocket.send_json({
                         "type": mt.ERROR.value,
@@ -184,6 +193,7 @@ class WebSocketService:
                             "message": str(e)
                         }
                     })
+
                     await self.audit_service.log_event(
                         event=event,
                         user_id=user_id,

@@ -75,6 +75,25 @@ class MessageRepository:
         return result.scalars().all()
 
 
+    async def get_chat_unread_count(self, chat_id: UUID, user_id: UUID) -> int:
+        stmt = (
+            select(func.count(Message.id))
+            .join(
+                ChatParticipant,
+                ChatParticipant.chat_id == Message.chat_id
+            )
+            .where(
+                ChatParticipant.chat_id == chat_id,  # specific chat
+                ChatParticipant.user_id == user_id,  # my chats
+                Message.sender_id != user_id,  # not my messages
+                Message.read_at.is_(None)  # unread
+            )
+        )
+
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+
+
     async def get_unread_messages(self, chat_id: UUID, user_id: UUID) -> list[Message] and int:
         stmt = (
             select(Message)
@@ -107,6 +126,7 @@ class MessageRepository:
 
         result = await self.session.execute(stmt)
         return result.scalar_one()
+
 
     async def mark_as_read(self, chat_id: UUID, user_id: UUID):
         stmt = (

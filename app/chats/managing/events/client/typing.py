@@ -1,4 +1,3 @@
-from json import dumps
 from uuid import UUID
 
 from fastapi import WebSocket
@@ -24,12 +23,12 @@ class TypingEvent:
     ):
 
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.TYPING.value,
                 "data": {
                     "user_id": str(user_id),
                     "is_typing": event["data"]["is_typing"]
                 }
-            })
+            }
         )

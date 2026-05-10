@@ -1,4 +1,3 @@
-from json import dumps
 from uuid import UUID
 
 from fastapi import WebSocket
@@ -51,20 +50,20 @@ class TextEvent:
 
         # broadcast chat message
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.TEXT.value,
                 "data": serialize_message(message)
-            })
+            }
         )
 
         # delivered
         await self.message_service.mark_as_delivered(message.id)
 
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.DELIVERED.value,
                 "data": serialize_message_delivered(message.id)
-            })
+            }
         )

@@ -17,11 +17,11 @@ class UserJoinBroadcaster:
     async def broadcast(self, chat_id: UUID, user_id: UUID):
 
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.JOIN_TO_CHAT.value,
                 "data": {
                     "user_id": str(user_id)
                 }
-            })
+            }
         )

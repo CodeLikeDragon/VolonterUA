@@ -20,20 +20,24 @@ class ConnectionManager:
 
 
     def disconnect(self, chat_id: UUID, websocket: WebSocket):
+
         if websocket in self.active_connections[chat_id]:
             self.active_connections[chat_id].remove(websocket)
 
+        if not self.active_connections[chat_id]:
+            del self.active_connections[chat_id]
 
-    async def send_personal(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
+
+    async def send_personal(self, message: dict, websocket: WebSocket):
+        await websocket.send_json(message)
 
 
-    async def broadcast(self, chat_id: UUID, message: str):
+    async def broadcast(self, chat_id: UUID, message: dict):
         connections = self.active_connections[chat_id]
 
         for connection in connections.copy():
             try:
-                await connection.send_text(message)
+                await connection.send_json(message)
             except Exception:
                 if connection in connections:
                     connections.remove(connection)
@@ -57,11 +61,16 @@ class ConnectionManager:
 
 
     def disconnect_notifications(self, user_id: UUID, websocket: WebSocket):
+
         if websocket in self.notification_connections[user_id]:
             self.notification_connections[user_id].remove(websocket)
 
+        if not self.notification_connections[user_id]:
+            del self.notification_connections[user_id]
+
 
     async def send_notification(self, user_id: UUID, message: dict):
+
         connections = self.notification_connections[user_id]
 
         for connection in connections.copy():
@@ -69,7 +78,9 @@ class ConnectionManager:
             try:
                 await connection.send_json(message)
 
-            except Exception:
+            except Exception as e:
+                print("SEND ERROR:", e)
+
                 if connection in connections:
                     connections.remove(connection)
 

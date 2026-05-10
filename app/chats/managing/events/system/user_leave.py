@@ -1,4 +1,3 @@
-from json import dumps
 from uuid import UUID
 
 from app.chats.managing.manager import ConnectionManager
@@ -17,11 +16,11 @@ class UserLeaveBroadcaster:
     async def broadcast(self, chat_id: UUID, user_id: UUID):
 
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.LEAVE.value,
                 "data": {
                     "user_id": str(user_id)
                 }
-            })
+            }
         )

@@ -1,4 +1,3 @@
-from json import dumps
 from uuid import UUID
 
 from fastapi import WebSocket
@@ -59,20 +58,20 @@ class FileEvent:
         )
 
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.FILE.value,
                 "data": serialize_message(message)
-            })
+            }
         )
         # MARK AS DELIVERED
         await self.message_service.mark_as_delivered(message.id)
 
         # SEND DELIVERED EVENT
         await self.manager.broadcast(
-            chat_id,
-            dumps({
+            chat_id=chat_id,
+            message={
                 "type": mt.DELIVERED.value,
                 "data": serialize_message_delivered(message.id)
-            })
+            }
         )

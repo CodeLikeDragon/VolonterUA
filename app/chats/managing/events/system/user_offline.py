@@ -1,4 +1,3 @@
-from json import dumps
 from uuid import UUID
 
 from app.chats.managing.manager import ConnectionManager
@@ -21,11 +20,11 @@ class UserOfflineBroadcaster:
 
         if self.manager.user_connections[user_id] == 0:
             await self.manager.broadcast(
-                chat_id,
-                dumps({
+                chat_id=chat_id,
+                message={
                     "type": mt.USER_OFFLINE.value,
                     "data": {
                         "user_id": str(user_id)
                     }
-                })
+                }
             )
