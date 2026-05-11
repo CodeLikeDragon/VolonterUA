@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.users.refresh_tokens.models import RefreshToken
     from app.users.password_resets.models import PasswordReset
     from app.reviews.models import Review
+    from app.notifications.models import NotificationPreference
 
 
 class User(Base):
@@ -50,6 +51,7 @@ class User(Base):
     given_reviews: Mapped[list["Review"]] = relationship(back_populates="reviewer", foreign_keys="[Review.reviewer_id]")
     received_reviews: Mapped[list["Review"]] = relationship(back_populates="target_user", foreign_keys="[Review.target_user_id]")
 
+    notification_preferences: Mapped[list["NotificationPreference"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     __table_args__ = (
         Index("ix_users_is_active", "is_active"),
         Index("ix_users_city_id", "city_id"),

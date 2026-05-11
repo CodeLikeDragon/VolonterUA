@@ -10,6 +10,7 @@ from app.core.db import Base
 
 if TYPE_CHECKING:
     from app.geo.countries.models import Country
+    from app.notifications.models import NotificationPreference
 
 
 class City(Base):
@@ -30,6 +31,7 @@ class City(Base):
     timezone: Mapped[str | None] = mapped_column(String(64))
 
     country: Mapped["Country"] = relationship(back_populates="cities")
+    notification_preferences: Mapped[list["NotificationPreference"]] = relationship(back_populates="city", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("ix_cities_country_id", "country_id"),
