@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.common.enums import NotificationChannel
 
+# Notifications
 
 class NotificationCreate(BaseModel):
     channel: NotificationChannel = NotificationChannel.IN_APP
@@ -21,5 +22,21 @@ class NotificationOut(BaseModel):
     sent_at: datetime | None
     read_at: datetime | None
     meta: dict[str, Any] | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# NotificationPreferences
+
+class NotificationPreferenceCreate(BaseModel):
+    city_id: UUID
+
+
+class NotificationPreferenceOut(BaseModel):
+    id: UUID
+    city_id: UUID | None
+    user_id: UUID | None
+    created_at: datetime | None
+    updated_at: datetime | None
 
     model_config = ConfigDict(from_attributes=True)
