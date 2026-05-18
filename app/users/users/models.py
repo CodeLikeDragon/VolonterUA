@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.users.refresh_tokens.models import RefreshToken
     from app.users.password_resets.models import PasswordReset
     from app.reviews.models import Review
-    from app.notifications.models import NotificationPreference
+    from app.notifications.notifications.models import NotificationPreference
 
 
 class User(Base):

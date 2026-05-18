@@ -7,9 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.chats.messages.models import Message
 from app.common.errors import NotFoundError
 from app.common.pagination.schemas import PaginationParams
-from app.notifications.models import Notification
+from app.notifications.notifications.models import Notification
 from app.notifications.repository import NotificationsRepository
-from app.notifications.utils import _create_and_commit
 
 
 class NotificationService:

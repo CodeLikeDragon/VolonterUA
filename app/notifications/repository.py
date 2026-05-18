@@ -1,11 +1,10 @@
-from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.pagination.schemas import PaginationParams
-from app.notifications.models import Notification
+from app.notifications.notifications.models import Notification
 
 
 class NotificationsRepository:

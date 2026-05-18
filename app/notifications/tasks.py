@@ -6,7 +6,7 @@ from app.common.enums import NotificationChannel
 from app.core.celery_app import celery_app
 from app.core.database_sync import SessionLocal
 from app.core.redis import redis_client
-from app.notifications.models import Notification
+from app.notifications.notifications.models import Notification
 
 
 # @celery_app.task                                           # test code

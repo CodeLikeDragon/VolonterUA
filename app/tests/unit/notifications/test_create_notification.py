@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from uuid import uuid4
 
-from app.notifications.models import Notification
+from app.notifications.notifications.models import Notification
 from app.tests.helper import get_notification_service, get_auth_service
 from app.auth.schemas import RegisterRequest
 

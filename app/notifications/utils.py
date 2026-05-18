@@ -1,4 +1,4 @@
-from app.notifications.models import Notification
+from app.notifications.notifications.models import Notification
 
 
 async def _create_and_commit(self, notification: Notification):
