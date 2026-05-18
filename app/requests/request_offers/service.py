@@ -13,8 +13,8 @@ from app.chats.chats.service import ChatService
 from app.common.enums import ChatParticipantRole
 from app.common.errors import NotFoundError, ConflictError
 from app.common.pagination.schemas import PaginationParams
-from app.notifications.service import NotificationService
-from app.notifications.tasks import create_notification
+from app.notifications.notifications.service import NotificationService
+from app.notifications.notifications.tasks import create_notification
 
 from app.requests.request_offers.models import RequestOffer
 from app.requests.request_offers.repository import RequestOfferRepository

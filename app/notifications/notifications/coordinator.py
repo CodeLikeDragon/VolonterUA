@@ -4,8 +4,8 @@ from app.chats.managing.manager import ConnectionManager
 from app.chats.messages.models import Message
 from app.chats.chat_participants.service import ChatParticipantService
 from app.chats.messages.repository import MessageRepository
-from app.notifications.repository import NotificationsRepository
-from app.notifications.service import NotificationService
+from app.notifications.notifications.repository import NotificationsRepository
+from app.notifications.notifications.service import NotificationService
 from app.common.enums import MessageType as mt
 
 

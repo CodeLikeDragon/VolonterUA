@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Tuple
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +16,7 @@ from app.requests.requests.repository import RequestRepository
 from app.requests.requests.schemas import RequestCreate, RequestUpdate, RequestFilters, RequestFiltersOut, \
     RequestFullOut, _RequestOut
 from app.users.users.repository import UserRepository
-from app.notifications.tasks import create_notification
+from app.notifications.notifications.tasks import create_notification
 
 
 class RequestService:

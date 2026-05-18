@@ -8,7 +8,7 @@ from app.chats.managing.serializers.message import serialize_message, serialize_
 
 from app.chats.messages.service import MessageService
 from app.common.enums import MessageType as mt
-from app.notifications.coordinator import NotificationCoordinator
+from app.notifications.notifications.coordinator import NotificationCoordinator
 
 
 class FileEvent:

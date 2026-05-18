@@ -9,7 +9,7 @@ from app.chats.messages.schemas import MessageCreate
 from app.chats.messages.service import MessageService
 
 from app.common.enums import MessageType as mt
-from app.notifications.coordinator import NotificationCoordinator
+from app.notifications.notifications.coordinator import NotificationCoordinator
 
 
 class TextEvent:

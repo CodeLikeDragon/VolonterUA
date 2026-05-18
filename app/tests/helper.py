@@ -4,8 +4,8 @@ from app.geo.cities.repository import CityRepository
 from app.geo.cities.services import CityService
 from app.geo.countries.repository import CountryRepository
 from app.geo.countries.services import CountryService
-from app.notifications.repository import NotificationsRepository
-from app.notifications.service import NotificationService
+from app.notifications.notifications.repository import NotificationsRepository
+from app.notifications.notifications.service import NotificationService
 from app.requests.request_item_assignment.repository import RequestItemAssignmentRepository
 from app.requests.request_item_assignment.service import RequestItemAssignmentService
 from app.requests.request_items.repository import RequestItemRepository
@@ -14,7 +14,6 @@ from app.requests.request_offers.repository import RequestOfferRepository
 from app.requests.request_offers.service import RequestOfferService
 from app.requests.requests.repository import RequestRepository
 from app.requests.requests.service import RequestService
-from app.users.email_verifications.service import generate_otp_code
 
 from app.audit.repository import AuditEventRepository
 from app.audit.service import AuditEventService

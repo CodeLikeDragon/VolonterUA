@@ -8,8 +8,8 @@ from app.audit.service import AuditEventService
 from app.common.enums import RequestStatus
 from app.common.errors import NotFoundError, BadRequestError, ConflictError
 from app.common.pagination.schemas import PaginationParams
-from app.notifications.service import NotificationService
-from app.notifications.tasks import create_notification
+from app.notifications.notifications.service import NotificationService
+from app.notifications.notifications.tasks import create_notification
 
 from app.requests.request_item_assignment.models import RequestItemAssignment
 from app.requests.request_item_assignment.repository import RequestItemAssignmentRepository

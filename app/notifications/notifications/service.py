@@ -8,7 +8,7 @@ from app.chats.messages.models import Message
 from app.common.errors import NotFoundError
 from app.common.pagination.schemas import PaginationParams
 from app.notifications.notifications.models import Notification
-from app.notifications.repository import NotificationsRepository
+from app.notifications.notifications.repository import NotificationsRepository
 
 
 class NotificationService:

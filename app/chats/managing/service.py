@@ -26,7 +26,7 @@ from app.chats.managing.events.system.user_offline import UserOfflineBroadcaster
 from app.chats.messages.service import MessageService
 from app.chats.messages.coordinator import ReadCoordinator
 
-from app.notifications.coordinator import NotificationCoordinator
+from app.notifications.notifications.coordinator import NotificationCoordinator
 
 
 class WebSocketService:

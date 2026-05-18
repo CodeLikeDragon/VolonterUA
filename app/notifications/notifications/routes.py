@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.common.pagination.schemas import PaginationParams
 from app.core.deps import get_notification_service, get_current_user_id, get_current_user
-from app.notifications.schemas import NotificationOut
-from app.notifications.service import NotificationService
-from app.common.errors import NotFoundError
+from app.notifications.notifications.schemas import NotificationOut
+from app.notifications.notifications.service import NotificationService
 from app.users.users.models import User
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])

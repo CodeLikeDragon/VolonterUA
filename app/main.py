@@ -19,7 +19,7 @@ from app.requests.request_offers.routes import router as request_offers_router
 from app.requests.request_item_assignment.routes import router as request_item_assignment_router
 from app.requests.request_images.routes import router as request_images_router
 
-from app.notifications.routes import router as notifications_router
+from app.notifications.notifications.routes import router as notifications_router
 
 from app.consents.routes import router as consents_router
 

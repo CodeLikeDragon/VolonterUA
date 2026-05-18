@@ -22,9 +22,9 @@ from app.chats.messages.service import MessageService
 
 from app.geo.cities.repository import CityRepository
 
-from app.notifications.coordinator import NotificationCoordinator
-from app.notifications.repository import NotificationsRepository
-from app.notifications.service import NotificationService
+from app.notifications.notifications.coordinator import NotificationCoordinator
+from app.notifications.notifications.repository import NotificationsRepository
+from app.notifications.notifications.service import NotificationService
 
 from app.users.users.service import UserService
 from app.users.users.repository import UserRepository
