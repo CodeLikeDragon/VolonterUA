@@ -10,7 +10,7 @@ from app.core.db import Base
 
 if TYPE_CHECKING:
     from app.geo.countries.models import Country
-    from app.notifications.notifications.models import NotificationPreference
+    from app.notifications.notification_preferences.models import NotificationPreference
 
 
 class City(Base):
