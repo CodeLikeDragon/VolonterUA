@@ -16,6 +16,8 @@ from app.common.errors import UnauthorizedError
 from app.common.storage.cloudinary_service import CloudinaryService
 from app.core.db import async_session_factory
 from app.core.security import decode_access_token
+from app.notifications.notification_preferences.repository import NotificationPreferenceRepository
+from app.notifications.notification_preferences.service import NotificationPreferencesService
 from app.requests.request_images.repository import RequestImageRepository
 from app.requests.request_images.service import RequestImageService
 from app.reviews.repository import ReviewRepository
@@ -312,6 +314,17 @@ def get_notification_service(
     session: AsyncSession = Depends(get_session)
 ):
     return NotificationService(NotificationsRepository(session))
+
+
+def get_notification_preferences_service(
+    session: AsyncSession = Depends(get_session)
+):
+    return NotificationPreferencesService(
+        session=session,
+        repo=NotificationPreferenceRepository(session),
+        city_repo=CityRepository(session),
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
+    )
 
 
 # =========================
