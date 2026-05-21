@@ -20,6 +20,7 @@ from app.requests.request_item_assignment.routes import router as request_item_a
 from app.requests.request_images.routes import router as request_images_router
 
 from app.notifications.notifications.routes import router as notifications_router
+from app.notifications.notification_preferences.routes import router as notification_preferences_router
 
 from app.consents.routes import router as consents_router
 
@@ -68,6 +69,7 @@ app.include_router(request_images_router)
 
 app.include_router(notifications_router)
 app.include_router(ws_notifications_router)
+app.include_router(notification_preferences_router)
 
 app.include_router(consents_router)
 
