@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.chats.chat_participants.repository import ChatParticipantRepository
+from app.chats.chat_participants.service import ChatParticipantService
 from app.chats.chats.repository import ChatRepository
 from app.chats.chats.service import ChatService
 from app.chats.managing.manager import ConnectionManager
@@ -18,6 +19,7 @@ from app.core.db import async_session_factory
 from app.core.security import decode_access_token
 from app.notifications.notification_preferences.repository import NotificationPreferenceRepository
 from app.notifications.notification_preferences.service import NotificationPreferencesService
+from app.notifications.notifications.coordinator import NotificationCoordinator
 from app.requests.request_images.repository import RequestImageRepository
 from app.requests.request_images.service import RequestImageService
 from app.reviews.repository import ReviewRepository
@@ -227,6 +229,60 @@ def get_request_service(
     user_repo = UserRepository(session)
     audit_repo = AuditEventRepository(session)
     audit_service = AuditEventService(session=session, repo=audit_repo)
+
+    manager = ConnectionManager()
+    message_repo = MessageRepository(session)
+    notification_repo = NotificationsRepository(session)
+    notification_service = NotificationService(session=session, repo=notification_repo)
+    chat_repo = ChatRepository(session)
+    chat_participant_repo = ChatParticipantRepository(session)
+    chat_service=ChatService(
+        session=session,
+        repo=chat_repo,
+        chat_participant_repo=chat_participant_repo,
+        audit_service=audit_service
+    )
+    city_repo = CityRepository(session)
+    user_service = UserService(
+        session=session,
+        repo=user_repo,
+        city_repo=city_repo
+    )
+
+    participant_service = ChatParticipantService(
+        session=session,
+        repo=ChatParticipantRepository(session),
+        chat_service=chat_service,
+        user_service=user_service
+    )
+
+    city_service = CityService(
+        session=session,
+        repo=city_repo,
+        audit_service=audit_service
+    )
+
+    notification_preferences_repo = NotificationPreferenceRepository(session)
+
+    notification_preferences_service = NotificationPreferencesService(
+        session=session,
+        repo=notification_preferences_repo,
+        city_repo=city_repo,
+        audit_service=audit_service
+    )
+
+    notification_coordinator = NotificationCoordinator(
+        session=session,
+        manager=manager,
+        message_repo=message_repo,
+        notification_repo=notification_repo,
+        notification_service=notification_service,
+        participant_service=participant_service,
+        city_service=city_service,
+        user_service=user_service,
+        notification_preferences_service=notification_preferences_service
+    )
+
     return RequestService(
         session=session,
         repo=repo,
@@ -234,7 +290,8 @@ def get_request_service(
         offer_repo=offer_repo,
         assignment_repo=assignment_repo,
         user_repo=user_repo,
-        audit_service=audit_service
+        audit_service=audit_service,
+        notification_coordinator=notification_coordinator
     )
 
 

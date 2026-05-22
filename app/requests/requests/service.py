@@ -7,6 +7,7 @@ from app.common.enums import RequestStatus
 from app.common.errors import NotFoundError, ForbiddenError, ConflictError, BadRequestError
 from app.audit.service import AuditEventService
 from app.common.pagination.schemas import PaginationParams
+from app.notifications.notifications.coordinator import NotificationCoordinator
 from app.requests.request_item_assignment.repository import RequestItemAssignmentRepository
 from app.requests.request_items.repository import RequestItemRepository
 from app.requests.request_offers.repository import RequestOfferRepository
@@ -29,7 +30,8 @@ class RequestService:
         offer_repo: RequestOfferRepository,
         assignment_repo: RequestItemAssignmentRepository,
         user_repo: UserRepository,
-        audit_service: AuditEventService
+        audit_service: AuditEventService,
+        notification_coordinator: NotificationCoordinator
     ):
         self.session = session
         self.repo = repo
@@ -38,6 +40,7 @@ class RequestService:
         self.assignment_repo = assignment_repo
         self.user_repo = user_repo
         self.audit_service = audit_service
+        self.notification_coordinator = notification_coordinator
 
     # -----------------------------
     # CREATE
@@ -46,6 +49,10 @@ class RequestService:
         try:
             request = await self.repo.create(data, user_id)
             await self.session.commit()
+
+            await self.notification_coordinator.notify_about_new_request(
+                request=request
+            )
         except IntegrityError:
             await self.session.rollback()
             raise ConflictError("Failed to create request")
@@ -54,16 +61,6 @@ class RequestService:
             event="request_created",
             user_id=user_id,
             data={"request_id": str(request.id)},
-        )
-
-        create_notification.delay(
-            user_id=str(request.created_by),
-            title="Request created",
-            body="Request created successfully",
-            meta={
-                "request_id": str(request.id),
-                "type": "Created",
-            }
         )
 
         return request

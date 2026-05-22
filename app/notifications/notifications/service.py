@@ -46,6 +46,32 @@ class NotificationService:
         return notification
 
 
+    async def create_notification(
+        self,
+        *,
+        user_id: UUID,
+        title: str,
+        body: str,
+        meta: dict | None = None,
+        commit: bool = True,
+    ) -> Notification:
+
+        notification = Notification(
+            user_id=user_id,
+            title=title,
+            body=body,
+            meta=meta,
+        )
+
+        notification = await self.repo.create(notification)
+
+        if commit:
+            await self.session.commit()
+            await self.session.refresh(notification)
+
+        return notification
+
+
     async def get_my_notifications(self, user_id: UUID, pagination: PaginationParams) -> List[Notification]:
         return await self.repo.get_my_notifications(user_id=user_id, pagination=pagination)
 
