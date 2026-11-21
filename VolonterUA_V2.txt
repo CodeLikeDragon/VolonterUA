@@ -1,0 +1,169 @@
+# VolonterUA — V2 Scope (Backend)
+
+## 🎯 Goal
+Upgrade MVP (V1) to a production-ready platform with communication, trust, and scalability.
+
+---
+
+## 1. 💬 Chat System
+### Tables:
+- chats
+- messages
+- chat_participants
+
+
+### Features:
+- Auto-create chat on offer or accept
+- WebSocket messaging
+- Optional Redis for online status
+
+### Endpoints:
+- GET /chats
+- GET /chats/{id}
+- POST /messages
+
+---
+
+## 2. ⭐ Reviews & Rating
+### Table:
+- reviews
+
+### Fields:
+- reviewer_id
+- target_user_id
+- request_id
+- rating (1–5)
+- comment
+
+### Rules:
+- Only after request is FULFILLED
+
+### Endpoints:
+- POST /reviews
+- GET /users/{id}/reviews
+
+---
+
+## 3. 🖼 Request Images
+### Table:
+- request_images
+
+### Fields:
+- request_id
+- image_url
+
+### Storage:
+- S3 / Cloudinary / local (dev)
+
+### Endpoints:
+- POST /requests/{id}/images
+- DELETE /images/{id}
+
+---
+
+## 4. 📍 Geolocation
+### Add to requests:
+- latitude
+- longitude
+
+### Features:
+- Search by distance
+
+### Endpoint:
+- GET /requests?near=lat,lng&radius=km
+
+---
+
+## 5. 🔔 Notifications Upgrade
+### Features:
+- New request in city
+- New message
+- Nearby requests
+
+### Tech:
+- Celery + Redis
+
+---
+
+## 6. 🔎 Advanced Search
+### Add:
+- sort by popularity
+- urgent filter
+- geo filtering
+
+### Endpoints:
+- GET /requests?sort=popular
+- GET /requests?urgent=true
+
+---
+
+## 7. 🏷 Categories
+### Tables:
+- categories
+- request_categories
+
+### Examples:
+- food
+- medicine
+- military
+- clothes
+
+### Endpoints:
+- GET /categories
+- POST /requests (with category)
+
+---
+
+## 8. 📊 Analytics (Basic)
+### Metrics:
+- total requests
+- fulfilled requests
+- top users
+
+### Endpoint:
+- GET /admin/stats
+
+---
+
+## 9. 🔐 Security Improvements
+- Rate limiting (Redis)
+- Email throttling
+- Audit logs (already exists)
+
+---
+
+## 10. ⚙️ Architecture Improvements
+- PostgreSQL (done ✅)
+- Prepare microservices split:
+  - auth_service
+  - request_service
+  - notification_service
+  - chat_service
+
+---
+
+## 🚀 Priorities
+
+### Phase 1 (Core)
+1. Chat
+2. Images
+3. Categories
+
+### Phase 2
+4. Reviews
+5. Geolocation
+
+### Phase 3
+6. Notifications (Celery)
+7. Analytics
+
+---
+
+## ✅ Definition of Done (V2)
+- Chat works
+- Images supported
+- Categories implemented
+- Reviews system active
+- Geo search works
+- Background jobs running
+- Ready for real users
