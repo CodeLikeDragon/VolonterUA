@@ -9,4 +9,4 @@ venv/
 alembic/versions/*.pyc
 todo
 VolonterUA_V2.txt
-V1
+V1*.zip
