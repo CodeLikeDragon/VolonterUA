@@ -14,8 +14,8 @@ async def test_unread_notifications_count_flow(session):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    await service.notify_new_offer(user.id, uuid4())
-    await service.notify_new_offer(user.id, uuid4())
+    await service.create_notification(user_id=user.id, title="Test", body="Test body")
+    await service.create_notification(user_id=user.id, title="Test", body="Test body")
 
     count = await service.get_unread_notifications_count(user.id)
 

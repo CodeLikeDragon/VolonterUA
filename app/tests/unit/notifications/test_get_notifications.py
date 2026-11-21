@@ -17,10 +17,7 @@ async def test_get_my_notifications(session):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    notification = await service.notify_new_offer(
-        request_owner_id=user.id,
-        request_id=uuid4()
-    )
+    notification = await service.create_notification(user_id=user.id, title="Test", body="Test body")
 
     pagination_params = PaginationParams(
         page=1,
@@ -42,10 +39,7 @@ async def test_get_notification_by_id(session):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    notification = await service.notify_new_offer(
-        request_owner_id=user.id,
-        request_id=uuid4()
-    )
+    notification = await service.create_notification(user_id=user.id, title="Test", body="Test body")
 
     result = await service.get_user_notification_by_id(notification_id=notification.id, user_id=user.id)
 
@@ -69,8 +63,8 @@ async def test_unread_count(session):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    await service.notify_new_offer(user.id, uuid4())
-    await service.notify_new_offer(user.id, uuid4())
+    await service.create_notification(user_id=user.id, title="Test", body="Test body")
+    await service.create_notification(user_id=user.id, title="Test", body="Test body")
 
     count = await service.get_unread_notifications_count(user.id)
 

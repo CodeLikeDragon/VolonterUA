@@ -15,10 +15,7 @@ async def test_mark_as_read(session):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    notification = await service.notify_new_offer(
-        request_owner_id=user.id,
-        request_id=uuid4()
-    )
+    notification = await service.create_notification(user_id=user.id, title="Test", body="Test body")
 
     await service.mark_as_read(notification_id=notification.id, user_id=user.id)
 

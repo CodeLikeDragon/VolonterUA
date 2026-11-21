@@ -1,10 +1,10 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.categories.models import Category
+from app.categories.models import Category, RequestCategory
 
 
 class CategoryRepository:
@@ -33,3 +33,11 @@ class CategoryRepository:
         self.session.add(category)
         await self.session.flush()
         return category
+
+    async def set_for_request(self, request_id: UUID, category_ids: Sequence[UUID]) -> None:
+        await self.session.execute(
+            delete(RequestCategory).where(RequestCategory.request_id == request_id)
+        )
+        for category_id in set(category_ids):
+            self.session.add(RequestCategory(request_id=request_id, category_id=category_id))
+        await self.session.flush()

@@ -27,4 +27,6 @@ from app.consents import models as _consents_models    # noqa: F401
 
 from app.audit import models as _audit_models    # noqa: F401
 
+from app.categories import models as _categories_models  # noqa: F401
+
 from app.reviews import models as _reviews_models

@@ -29,7 +29,7 @@ async def setup_base(session, verify_user_helper):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    verify_user_helper(session)
+    await verify_user_helper(session)
 
     country = await country_service.create_country(
         CountryCreate(name="Germany", iso_code="DE")

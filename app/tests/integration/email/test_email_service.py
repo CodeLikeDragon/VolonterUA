@@ -3,6 +3,8 @@ from unittest.mock import MagicMock
 
 from app.common.email.service import EmailService
 
+pytestmark = pytest.mark.real_email
+
 
 @pytest.mark.asyncio
 async def test_send_email_success(monkeypatch):

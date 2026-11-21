@@ -33,19 +33,15 @@ class EmailService:
             html_content = self.render_template(template_name, context)
 
             message = MIMEMultipart()
-            message["From"] = settings.SMTP_HOST
+            message["From"] = settings.SMTP_USER
             message["To"] = to_email
             message["Subject"] = subject
-
             message.attach(MIMEText(html_content, "html"))
 
             with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
                 server.starttls()
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(
-                    settings.SMTP_HOST,
-                    to_email,
-                    message.as_string()
-                )
-        except EmailSendError as e:
-            raise EmailSendError(str(e))
+                server.sendmail(settings.SMTP_USER, to_email, message.as_string())
+
+        except Exception as e:
+            raise EmailSendError(str(e)) from e

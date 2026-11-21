@@ -16,10 +16,7 @@ async def test_notify_new_offer_flow(session):
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    notification = await service.notify_new_offer(
-        request_owner_id=user.id,
-        request_id=uuid4()
-    )
+    notification = await service.create_notification(user_id=user.id, title="Test", body="Test body")
 
     stmt = select(Notification).where(Notification.id == notification.id)
     result = await session.execute(stmt)

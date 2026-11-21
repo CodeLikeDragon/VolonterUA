@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 from app.common.email.service import EmailService
 from app.common.errors import EmailSendError
 
+pytestmark = pytest.mark.real_email
+
 
 @pytest.mark.asyncio
 async def test_send_email(monkeypatch):

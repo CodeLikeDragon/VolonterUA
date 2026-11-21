@@ -39,8 +39,20 @@ async def clean_db(session):
 
 
 @pytest.fixture(autouse=True)
-def mock_email_service(monkeypatch):
+def mock_email_service(request, monkeypatch):
+    if request.node.get_closest_marker("real_email"):
+        return
     monkeypatch.setattr(
         "app.common.email.service.EmailService.send_email",
         lambda *args, **kwargs: None,
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_celery(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "app.notifications.notifications.tasks.create_notification.delay",
+        lambda *args, **kwargs: calls.append((args, kwargs)),
+    )
+    return calls

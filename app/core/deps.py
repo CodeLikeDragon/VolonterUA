@@ -5,6 +5,8 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.categories.repository import CategoryRepository
+from app.categories.service import CategoryService
 from app.chats.chat_participants.repository import ChatParticipantRepository
 from app.chats.chat_participants.service import ChatParticipantService
 from app.chats.chats.repository import ChatRepository
@@ -16,6 +18,7 @@ from app.chats.messages.service import MessageService
 from app.common.errors import UnauthorizedError
 from app.common.storage.cloudinary_service import CloudinaryService
 from app.core.db import async_session_factory
+from app.core.factories import build_request_service
 from app.core.security import decode_access_token
 from app.notifications.notification_preferences.repository import NotificationPreferenceRepository
 from app.notifications.notification_preferences.service import NotificationPreferencesService
@@ -64,6 +67,15 @@ from app.geo.countries.services import CountryService
 from app.audit.service import AuditEventService
 from app.common.email.service import EmailService
 
+
+# =========================
+# CONNECTION MANAGER
+# =========================
+
+connection_manager = ConnectionManager()
+
+def get_connection_manager() -> ConnectionManager:
+    return connection_manager
 
 # =========================
 # SESSION
@@ -164,6 +176,7 @@ def get_user_service(
     session: AsyncSession = Depends(get_session)
 ):
     return UserService(
+        session=session,
         repo=UserRepository(session),
         city_repo=CityRepository(session)
     )
@@ -219,80 +232,8 @@ def get_refresh_token_service(
 # REQUESTS
 # =========================
 
-def get_request_service(
-    session: AsyncSession = Depends(get_session),
-):
-    repo = RequestRepository(session)
-    item_repo = RequestItemRepository(session)
-    offer_repo = RequestOfferRepository(session)
-    assignment_repo = RequestItemAssignmentRepository(session)
-    user_repo = UserRepository(session)
-    audit_repo = AuditEventRepository(session)
-    audit_service = AuditEventService(session=session, repo=audit_repo)
-
-    manager = ConnectionManager()
-    message_repo = MessageRepository(session)
-    notification_repo = NotificationsRepository(session)
-    notification_service = NotificationService(session=session, repo=notification_repo)
-    chat_repo = ChatRepository(session)
-    chat_participant_repo = ChatParticipantRepository(session)
-    chat_service=ChatService(
-        session=session,
-        repo=chat_repo,
-        chat_participant_repo=chat_participant_repo,
-        audit_service=audit_service
-    )
-    city_repo = CityRepository(session)
-    user_service = UserService(
-        session=session,
-        repo=user_repo,
-        city_repo=city_repo
-    )
-
-    participant_service = ChatParticipantService(
-        session=session,
-        repo=ChatParticipantRepository(session),
-        chat_service=chat_service,
-        user_service=user_service
-    )
-
-    city_service = CityService(
-        session=session,
-        repo=city_repo,
-        audit_service=audit_service
-    )
-
-    notification_preferences_repo = NotificationPreferenceRepository(session)
-
-    notification_preferences_service = NotificationPreferencesService(
-        session=session,
-        repo=notification_preferences_repo,
-        city_repo=city_repo,
-        audit_service=audit_service
-    )
-
-    notification_coordinator = NotificationCoordinator(
-        session=session,
-        manager=manager,
-        message_repo=message_repo,
-        notification_repo=notification_repo,
-        notification_service=notification_service,
-        participant_service=participant_service,
-        city_service=city_service,
-        user_service=user_service,
-        notification_preferences_service=notification_preferences_service
-    )
-
-    return RequestService(
-        session=session,
-        repo=repo,
-        item_repo=item_repo,
-        offer_repo=offer_repo,
-        assignment_repo=assignment_repo,
-        user_repo=user_repo,
-        audit_service=audit_service,
-        notification_coordinator=notification_coordinator
-    )
+def get_request_service(session: AsyncSession = Depends(get_session)):
+    return build_request_service(session, connection_manager)
 
 
 def get_request_item_service(
@@ -338,10 +279,10 @@ def get_request_item_assignment_service(
     return RequestItemAssignmentService(
         session=session,
         repo=RequestItemAssignmentRepository(session),
-        request_repo=RequestItemRepository(session),
+        request_repo=RequestRepository(session),
         item_repo=RequestItemRepository(session),
         offer_repo=RequestOfferRepository(session),
-        notification_service=NotificationService(NotificationsRepository(session)),
+        notification_service=NotificationService(session=session, repo=NotificationsRepository(session)),
         audit_service=AuditEventService(session=session, repo=AuditEventRepository(session))
     )
 
@@ -352,7 +293,7 @@ def get_request_images_service(
     repo = RequestImageRepository(session)
     request_repo = RequestRepository(session)
     user_repo = UserRepository(session)
-    storage = CloudinaryService
+    storage = CloudinaryService()
 
     return RequestImageService(
         session=session,
@@ -391,7 +332,11 @@ def get_notification_preferences_service(
 def get_consent_service(
     session: AsyncSession = Depends(get_session)
 ):
-    return ConsentsService(ConsentsRepository(session))
+    return ConsentsService(
+        session=session,
+        repo=ConsentsRepository(session),
+        audit_service=AuditEventService(session=session, repo=AuditEventRepository(session)),
+    )
 
 
 # =========================
@@ -433,9 +378,52 @@ def get_review_service(
     offer_repo = RequestOfferRepository(session)
     assignment_repo = RequestItemAssignmentRepository(session)
     audit_repo = AuditEventRepository(session)
+    message_repo = MessageRepository(session)
+    notification_repo = NotificationsRepository(session)
+    participant_repo = ChatParticipantRepository(session)
+    chat_repo = ChatRepository(session)
+    notification_preferences_repo = NotificationPreferenceRepository(session)
 
+    notification_service = NotificationService(session=session, repo=notification_repo)
     user_service = UserService(session=session, repo=user_repo, city_repo=city_repo)
     audit_service = AuditEventService(session=session, repo=audit_repo)
+
+    chat_service = ChatService(
+        session=session,
+        repo=chat_repo,
+        chat_participant_repo=participant_repo,
+        audit_service=audit_service
+    )
+    participant_service = ChatParticipantService(
+        session=session,
+        repo=participant_repo,
+        chat_service=chat_service,
+        user_service=user_service
+    )
+    city_service = CityService(
+        session=session,
+        repo=city_repo,
+        audit_service=audit_service
+    )
+    notification_preferences_service = NotificationPreferencesService(
+        session=session,
+        repo=notification_preferences_repo,
+        city_repo=city_repo,
+        audit_service=audit_service
+    )
+
+    notification_coordinator = NotificationCoordinator(
+        session=session,
+        manager=connection_manager,
+        message_repo=message_repo,
+        notification_repo=notification_repo,
+        notification_service=notification_service,
+        participant_service=participant_service,
+        city_service=city_service,
+        user_service=user_service,
+        notification_preferences_service=notification_preferences_service
+    )
+
     request_service = RequestService(
         session=session,
         repo=request_repo,
@@ -443,7 +431,8 @@ def get_review_service(
         offer_repo=offer_repo,
         assignment_repo=assignment_repo,
         user_repo=user_repo,
-        audit_service=audit_service
+        audit_service=audit_service,
+        notification_coordinator=notification_coordinator
     )
 
     return ReviewService(
@@ -473,7 +462,7 @@ def get_websocket_service(
     )
 
     return WebSocketService(
-        manager=ConnectionManager(),
+        manager=connection_manager,
         message_service=MessageService(
             session=session,
             repo=message_repo,
@@ -519,3 +508,13 @@ def get_message_service(
         user_service=user_service,
         chat_service=chat_service
     )
+
+
+# =========================
+# CATEGORIES
+# =========================
+
+def get_category_service(
+    session: AsyncSession = Depends(get_session)
+):
+    return CategoryService(session=session, repo=CategoryRepository(session))

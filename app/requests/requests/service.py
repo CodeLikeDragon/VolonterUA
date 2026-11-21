@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.categories.repository import CategoryRepository
 from app.common.enums import RequestStatus
 from app.common.errors import NotFoundError, ForbiddenError, ConflictError, BadRequestError
 from app.audit.service import AuditEventService
@@ -17,7 +18,6 @@ from app.requests.requests.repository import RequestRepository
 from app.requests.requests.schemas import RequestCreate, RequestUpdate, RequestFilters, RequestFiltersOut, \
     RequestFullOut, _RequestOut
 from app.users.users.repository import UserRepository
-from app.notifications.notifications.tasks import create_notification
 
 
 class RequestService:
@@ -41,18 +41,18 @@ class RequestService:
         self.user_repo = user_repo
         self.audit_service = audit_service
         self.notification_coordinator = notification_coordinator
+        self.category_repo = CategoryRepository(session)
 
     # -----------------------------
     # CREATE
     # -----------------------------
     async def create_request(self, data: RequestCreate, user_id: UUID) -> Request:
+        await self._validate_categories(data.category_ids)
         try:
             request = await self.repo.create(data, user_id)
+            await self.category_repo.set_for_request(request.id, data.category_ids)
             await self.session.commit()
-
-            await self.notification_coordinator.notify_about_new_request(
-                request=request
-            )
+            await self.session.refresh(request, attribute_names=["categories"])
         except IntegrityError:
             await self.session.rollback()
             raise ConflictError("Failed to create request")
@@ -62,6 +62,11 @@ class RequestService:
             user_id=user_id,
             data={"request_id": str(request.id)},
         )
+
+        try:
+            await self.notification_coordinator.notify_about_new_request(request=request)
+        except Exception:
+            pass  # пізніше замінити на logger.exception(...)
 
         return request
 
@@ -110,7 +115,9 @@ class RequestService:
             created_by=request.created_by,
             assignee_id=request.assignee_id,
             created_at=request.created_at,
-            updated_at=request.updated_at
+            updated_at=request.updated_at,
+            latitude=request.latitude,
+            longitude=request.longitude,
         )
 
         # --- основні дані ---
@@ -167,11 +174,8 @@ class RequestService:
             offset=pagination.offset
         )
 
-        return await self.repo.list(limit=pagination.limit, offset=pagination.offset)
-
 
     def _parse_near(self, near: str) -> Tuple[float, float]:
-
         if not near:
             raise BadRequestError("Please provide required coordinates")
 
@@ -179,29 +183,27 @@ class RequestService:
             lat_str, lng_str = near.split(",")
             lat = float(lat_str)
             lng = float(lng_str)
-        except Exception:
-            raise ValueError("Invalid near format. Use lat,lng")
+        except ValueError:
+            raise BadRequestError("Invalid near format. Use lat,lng")
 
         if not (-90 <= lat <= 90):
-            raise ValueError("Invalid latitude")
+            raise BadRequestError("Invalid latitude")
 
         if not (-180 <= lng <= 180):
-            raise ValueError("Invalid longitude")
+            raise BadRequestError("Invalid longitude")
 
         return lat, lng
 
-
     def _parse_radius(self, radius: float) -> float:
-
         try:
             radius = float(radius)
-        except Exception:
-            raise ValueError("Invalid radius")
+        except (TypeError, ValueError):
+            raise BadRequestError("Invalid radius")
 
         if radius < 0:
             raise BadRequestError("Please provide correct radius value")
 
-        return float(radius)
+        return radius
 
     # -----------------------------
     # UPDATE
@@ -239,7 +241,12 @@ class RequestService:
             request.city_id = data.city_id
 
         try:
+            if data.category_ids is not None:
+                await self._validate_categories(data.category_ids)
+                await self.category_repo.set_for_request(request.id, data.category_ids)
+
             await self.session.commit()
+            await self.session.refresh(request, attribute_names=["categories"])
         except Exception:
             await self.session.rollback()
             raise
@@ -268,3 +275,14 @@ class RequestService:
         except Exception:
             await self.session.rollback()
             raise
+
+    # -----------------------------
+    # VALIDATE
+    # -----------------------------
+    async def _validate_categories(self, category_ids) -> None:
+        ids = list(set(category_ids or []))
+        if not ids:
+            return
+        found = await self.category_repo.get_by_ids(ids)
+        if len(found) != len(ids):
+            raise NotFoundError("Category not found")

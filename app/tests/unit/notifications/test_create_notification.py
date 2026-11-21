@@ -12,85 +12,18 @@ from app.auth.schemas import RegisterRequest
 async def test_create_notification(session):
     service = get_notification_service(session)
     auth_service = get_auth_service(session)
-
     user = await auth_service.register(
         RegisterRequest(email="test@test.com", password="123456")
     )
 
-    notification = await service.notify_new_offer(
-        request_owner_id=user.id,
-        request_id=uuid4()
-    )
-
-    stmt = select(Notification).where(Notification.id == notification.id)
-    result = await session.execute(stmt)
-    db_notification = result.scalars().first()
-
-    assert db_notification is not None
-    assert db_notification.user_id == user.id
-
-
-@pytest.mark.asyncio
-async def test_notify_offer_accepted(session):
-    service = get_notification_service(session)
-    auth_service = get_auth_service(session)
-
-    user = await auth_service.register(
-        RegisterRequest(email="test@test.com", password="123456")
-    )
-
-    notification = await service.notify_offer_accepted(
-        helper_id=user.id,
-        request_id=uuid4()
-    )
-
-    stmt = select(Notification).where(Notification.id == notification.id)
-    result = await session.execute(stmt)
-    db_notification = result.scalars().first()
-
-    assert db_notification.id == notification.id
-    assert db_notification.user_id == notification.user_id
-
-
-@pytest.mark.asyncio
-async def test_notify_offer_declined(session):
-    service = get_notification_service(session)
-    auth_service = get_auth_service(session)
-
-    user = await auth_service.register(
-        RegisterRequest(email="test@test.com", password="123456")
-    )
-
-    notification = await service.notify_offer_declined(
-        helper_id=user.id,
-        request_id=uuid4()
-    )
-
-    stmt = select(Notification).where(Notification.id == notification.id)
-    result = await session.execute(stmt)
-    db_notification = result.scalars().first()
-
-    assert db_notification.id == notification.id
-    assert db_notification.user_id == notification.user_id
-
-
-@pytest.mark.asyncio
-async def test_notify_assignment_created(session):
-    service = get_notification_service(session)
-    auth_service = get_auth_service(session)
-
-    user = await auth_service.register(
-        RegisterRequest(email="test@test.com", password="123456")
-    )
-
-    notification = await service.notify_assignment_created(
+    notification = await service.create_notification(
         user_id=user.id,
-        request_id=uuid4()
+        title="New offer",
+        body="You have a new offer",
+        meta={"request_id": str(uuid4())},
     )
 
-    stmt = select(Notification).where(Notification.id == notification.id)
-    result = await session.execute(stmt)
-    db_notification = result.scalars().first()
-
-    assert db_notification.id == notification.id
-    assert db_notification.user_id == notification.user_id
+    assert notification.id is not None
+    assert notification.user_id == user.id
+    assert notification.title == "New offer"
+    assert notification.read_at is None

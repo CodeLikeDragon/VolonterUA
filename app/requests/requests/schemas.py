@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, ConfigDict
 
+from app.categories.schemas import CategoryOut
 from app.common.enums import RequestStatus
 from app.requests.request_item_assignment.schemas import RequestItemAssignmentOut
 from app.requests.request_items.schemas import RequestItemCreate, RequestItemOut
@@ -18,6 +19,7 @@ class RequestCreate(BaseModel):
     address: Optional[str] = Field(None, max_length=255)
     latitude: float | None = None
     longitude: float | None = None
+    category_ids: List[UUID] = Field(default_factory=list)
     # items: List[RequestItemCreate] = Field(default_factory=list)
 
 
@@ -27,6 +29,7 @@ class RequestUpdate(BaseModel):
     city_id: Optional[UUID] = None
     address: Optional[str] = Field(None, max_length=255)
     status: Optional[RequestStatus] = None
+    category_ids: List[UUID] | None = None
 
 
 class RequestUpdate(BaseModel):
@@ -34,6 +37,7 @@ class RequestUpdate(BaseModel):
     description: str | None = None
     address: str | None = None
     city_id: UUID | None = None
+    category_ids: List[UUID] | None = None
 
 
 class RequestCreateOut(BaseModel):
@@ -73,6 +77,7 @@ class RequestOut(BaseModel):
     items: List[RequestItemOut]
     offers: List[RequestOfferOut]
 
+    categories: List[CategoryOut] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -85,6 +90,7 @@ class RequestFilters(BaseModel):
     has_assignee: bool | None = None
     created_from: datetime | None = None
     created_to: datetime | None = None
+    category_ids: List[UUID] | None = None
 
     order: str | None = "desc"
 

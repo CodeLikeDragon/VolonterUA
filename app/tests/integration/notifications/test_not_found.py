@@ -10,4 +10,4 @@ async def test_mark_as_read_not_found(session):
     service = get_notification_service(session)
 
     with pytest.raises(NotFoundError):
-        await service.mark_as_read(uuid4())
+        await service.mark_as_read(uuid4(), uuid4())

@@ -61,11 +61,11 @@ async def test_update_assignment_success(session, verify_user_helper):
 
     updated = await assignment_service.update_assignment(
         assignment_id=assignment.id,
-        data=RequestItemAssignmentUpdate(qty_taken=8),
-        user_id=owner.id
+        data=RequestItemAssignmentUpdate(qty_taken=3),
+        user_id=helper.id,
     )
 
-    assert updated.qty_taken == 8
+    assert updated.qty_taken == 3
 
 
 @pytest.mark.asyncio

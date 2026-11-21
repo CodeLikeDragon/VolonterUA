@@ -85,7 +85,7 @@ async def test_delete_assignment_flow(session, verify_user_helper):
         user_id=helper.id,
     )
 
-    await assignment_service.delete(assignment.id)
+    await assignment_service.delete(assignment.id, user_id=helper.id)
 
     with pytest.raises(NotFoundError):
         await assignment_service.get_assignment_by_id(assignment.id)

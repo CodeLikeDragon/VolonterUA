@@ -17,14 +17,3 @@ def verify_user_helper(monkeypatch):
         await service.verify_email(email, "123456")
 
     return _verify
-
-
-@pytest.fixture(autouse=True)
-def mock_email_service(monkeypatch):
-    def fake_send_email(*args, **kwargs):
-        return None
-
-    monkeypatch.setattr(
-        "app.common.email.service.EmailService.send_email",
-        fake_send_email,
-    )

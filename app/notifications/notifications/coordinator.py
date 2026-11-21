@@ -137,6 +137,9 @@ class NotificationCoordinator:
 
     async def notify_about_new_request(self, request: Request):
 
+        if request.city_id is None:
+            return
+
         preferences = await self.notification_preferences_service.get_by_city_id(request.city_id)
 
         city = await self.city_service.get_city(request.city_id)

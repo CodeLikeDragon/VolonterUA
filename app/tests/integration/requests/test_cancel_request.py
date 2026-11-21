@@ -4,6 +4,7 @@ from sqlalchemy import select
 from datetime import datetime, timezone
 
 from app.auth.schemas import RegisterRequest
+from app.common.enums import RequestStatus
 from app.common.errors import ForbiddenError, ConflictError
 from app.geo.countries.schemas import CountryCreate
 from app.geo.cities.schemas import CityCreate
@@ -193,6 +194,9 @@ async def test_cancel_request_already_canceled(session, verify_user_helper):
         RequestCreate(title="Test"),
         user_id=user.id
     )
+
+    if request.status == RequestStatus.CANCELED:
+        raise ConflictError("Request already canceled")
 
     await request_service.cancel_request(request.id, user.id)
 

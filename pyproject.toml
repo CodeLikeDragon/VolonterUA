@@ -39,3 +39,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+
+markers = ["real_email: do not mock EmailService.send_email"]

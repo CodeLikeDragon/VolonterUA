@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.requests.request_offers.models import RequestOffer
     from app.reviews.models import Review
     from app.requests.request_images.models import RequestImage
+    from app.categories.models import Category
 
 
 class Request(Base):
@@ -63,6 +64,7 @@ class Request(Base):
     # relationships
     reviews: Mapped[List["Review"]] = relationship(back_populates="request")
     request_images: Mapped[List["RequestImage"]] = relationship(back_populates="request")
+    categories: Mapped[List["Category"]] = relationship(secondary="request_categories", back_populates="requests", lazy="selectin")
 
     __table_args__ = (
         Index("ix_requests_city_id", "city_id"),
